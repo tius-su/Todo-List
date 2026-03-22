@@ -1,0 +1,1514 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Planner Pro + Notifikasi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Super Planner">
+    <link rel="apple-touch-icon" href="logo.png">
+    
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338ca;
+            --bg: #F3F4F6;
+            --surface: #FFFFFF;
+            --text-main: #1F2937;
+            --text-sub: #6B7280;
+            --border: #E5E7EB;
+            --danger: #EF4444;
+            --success: #10B981;
+            --warning: #F59E0B;
+            
+            /* Priority Colors */
+            --p-high: #FEE2E2; --p-high-text: #991B1B;
+            --p-med: #FEF3C7; --p-med-text: #92400E;
+            --p-low: #D1FAE5; --p-low-text: #065F46;
+        }
+
+        [data-theme="dark"] {
+            --bg: #111827;
+            --surface: #1F2937;
+            --text-main: #F9FAFB;
+            --text-sub: #9CA3AF;
+            --border: #374151;
+            --p-high: #450a0a; --p-high-text: #fecaca;
+            --p-med: #451a03; --p-med-text: #fde68a;
+            --p-low: #064e3b; --p-low-text: #a7f3d0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background: var(--bg); color: var(--text-main); transition: 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* --- Header & Nav --- */
+        header {
+            padding: 15px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .brand { font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .brand img { width: 32px; height: 32px; border-radius: 8px; }
+        
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        
+        .theme-toggle {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: 0.2s;
+        }
+        .theme-toggle:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .user-info {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: var(--surface);
+            padding: 10px;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: var(--text-sub);
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+
+        .nav-btn.active { background: var(--primary); color: white; }
+
+        /* --- Main Content Area --- */
+        main { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
+        .view-section { display: none; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Smart Input --- */
+        .smart-input-container {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        
+        #task-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-main);
+            outline: none;
+        }
+        #task-input:focus { border-color: var(--primary); }
+
+        .input-options { display: flex; gap: 8px; flex-wrap: wrap; }
+        
+        select, input[type="date"], input[type="time"], input[type="number"] {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        .btn-add:hover { background: var(--primary-dark); }
+
+        /* --- Reminder Section --- */
+        .reminder-section {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .reminder-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .reminder-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .reminder-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        
+        .reminder-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .reminder-option input {
+            display: none;
+        }
+        
+        .custom-reminder {
+            display: none;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .custom-reminder.show { display: flex; }
+        
+        .custom-reminder input, .custom-reminder select {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text-main);
+            font-size: 0.85rem;
+        }
+
+        .multi-reminder-list {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        
+        .reminder-item .badge-reminder-type {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+        }
+        
+        .remove-reminder {
+            color: var(--danger);
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        /* --- Task List --- */
+        .task-item {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-left: 4px solid transparent;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .task-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .task-item.p-high { border-left-color: var(--danger); }
+        .task-item.p-med { border-left-color: var(--warning); }
+        .task-item.p-low { border-left-color: var(--success); }
+        .task-item.pinned { background: rgba(79, 70, 229, 0.05); }
+
+        .task-check {
+            width: 24px; height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            color: white;
+        }
+        .task-item.completed .task-check { background: var(--success); border-color: var(--success); }
+        .task-item.completed .task-content { opacity: 0.5; text-decoration: line-through; }
+
+        .task-content { flex: 1; }
+        .task-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+        .task-meta { font-size: 0.8rem; color: var(--text-sub); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .badge-cat { background: var(--border); color: var(--text-sub); }
+        .badge-p-high { background: var(--p-high); color: var(--p-high-text); }
+        .badge-p-med { background: var(--p-med); color: var(--p-med-text); }
+        .badge-p-low { background: var(--p-low); color: var(--p-low-text); }
+        
+        /* Reminder Badge Style */
+        .badge-reminder { 
+            background: #fee2e2; 
+            color: #ef4444; 
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .task-actions { display: flex; gap: 8px; opacity: 0; transition: 0.2s; }
+        .task-item:hover .task-actions { opacity: 1; }
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-sub); font-size: 0.9rem; }
+        .icon-btn:hover { color: var(--primary); }
+        .icon-btn.delete:hover { color: var(--danger); }
+
+        /* --- Calendar View --- */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .cal-day {
+            background: var(--surface);
+            padding: 10px 5px;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 60px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .cal-day.today { border: 2px solid var(--primary); }
+        .cal-day .day-num { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+        .cal-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; display: inline-block; margin: 1px; }
+
+        /* --- Stats & Habits --- */
+        .stat-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .stat-number { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        
+        .habit-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--surface); padding: 15px; border-radius: 10px; margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+        .habit-streak { color: var(--warning); font-weight: 600; }
+
+        /* --- Pomodoro Modal --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--surface); padding: 30px; border-radius: 20px;
+            text-align: center; width: 90%; max-width: 400px;
+        }
+        .timer-display { font-size: 4rem; font-weight: 700; font-variant-numeric: tabular-nums; margin: 20px 0; color: var(--text-main); }
+        .timer-controls button {
+            padding: 10px 20px; border-radius: 50px; border: none; font-weight: 600; cursor: pointer; margin: 5px;
+        }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-reset { background: var(--border); color: var(--text-main); }
+
+        /* --- Notification Permission Banner --- */
+        .notif-banner {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notif-banner button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* --- Reminder Modal --- */
+        .reminder-modal-content {
+            text-align: left;
+            max-width: 500px;
+        }
+        
+        .reminder-modal-content h3 {
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .reminder-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .reminder-list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .reminder-list-item .reminder-info {
+            flex: 1;
+        }
+
+        .reminder-list-item .reminder-type {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+
+        .reminder-list-item .reminder-time {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        /* Utilities */
+        .hidden { display: none; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Filter buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-sub);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notification Permission Banner -->
+    <div id="notif-banner" class="notif-banner">
+        <span><i class="fas fa-bell"></i> Aktifkan notifikasi agar tidak lupa tugas!</span>
+        <button onclick="requestNotificationPermission()">Aktifkan</button>
+    </div>
+
+    <header>
+        <div class="brand">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+            <i class="fas fa-bolt"></i> Super Planner
+        </div>
+        <div class="header-actions">
+            <span class="user-info" id="user-display">
+                <i class="fas fa-user-circle"></i> <span id="current-user">Guest</span>
+            </span>
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button class="logout-btn" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('tasks')">Tugas</button>
+        <button class="nav-btn" onclick="switchTab('calendar')">Kalender</button>
+        <button class="nav-btn" onclick="switchTab('habits')">Habit</button>
+        <button class="nav-btn" onclick="switchTab('stats')">Statistik</button>
+    </nav>
+
+    <main>
+        <!-- TASKS VIEW -->
+        <div id="view-tasks" class="view-section active">
+            <div class="smart-input-container">
+                <input type="text" id="task-input" placeholder="Ketik tugas (cth: 'Rapat besok jam 10 prioritas tinggi')..." oninput="parseNaturalLanguage()">
+                <div class="input-row">
+                    <select id="task-priority">
+                        <option value="low">Prioritas Rendah</option>
+                        <option value="med">Prioritas Sedang</option>
+                        <option value="high">Prioritas Tinggi</option>
+                    </select>
+                    <select id="task-category">
+                        <option value="Personal">Personal</option>
+                        <option value="Work">Kerja</option>
+                        <option value="School">Sekolah</option>
+                        <option value="Health">Kesehatan</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <input type="date" id="task-date">
+                    <input type="time" id="task-time">
+                </div>
+                
+                <!-- Reminder Section -->
+                <div class="reminder-section">
+                    <div class="reminder-title">
+                        <i class="fas fa-bell"></i> Pengingat
+                    </div>
+                    <div class="reminder-options">
+                        <label class="reminder-option" id="reminder-once">
+                            <input type="radio" name="reminder-type" value="once" checked>
+                            <i class="fas fa-bell"></i> Sekali
+                        </label>
+                        <label class="reminder-option" id="reminder-daily">
+                            <input type="radio" name="reminder-type" value="daily">
+                            <i class="fas fa-redo"></i> Harian
+                        </label>
+                        <label class="reminder-option" id="reminder-weekly">
+                            <input type="radio" name="reminder-type" value="weekly">
+                            <i class="fas fa-calendar-week"></i> Mingguan
+                        </label>
+                        <label class="reminder-option" id="reminder-monthly">
+                            <input type="radio" name="reminder-type" value="monthly">
+                            <i class="fas fa-calendar-alt"></i> Bulanan
+                        </label>
+                        <label class="reminder-option" id="reminder-custom">
+                            <input type="radio" name="reminder-type" value="custom">
+                            <i class="fas fa-cog"></i> Custom
+                        </label>
+                    </div>
+                    
+                    <!-- Custom Reminder Options -->
+                    <div class="custom-reminder" id="custom-reminder-options">
+                        <select id="custom-repeat-type">
+                            <option value="hours">Jam</option>
+                            <option value="days">Hari</option>
+                            <option value="weeks">Minggu</option>
+                        </select>
+                        <input type="number" id="custom-repeat-value" placeholder="Jumlah" min="1" value="1" style="width: 70px;">
+                        <span style="align-self: center; font-size: 0.85rem; color: var(--text-sub);">sekali</span>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.85rem;">
+                            <input type="checkbox" id="custom-until-delete" checked>
+                            Sampai dihapus
+                        </label>
+                    </div>
+                    
+                    <!-- Multi Reminder List -->
+                    <div class="multi-reminder-list" id="multi-reminder-list">
+                        <!-- Dynamic reminders will be added here -->
+                    </div>
+                    <button type="button" class="btn-add" style="background: var(--warning); margin-top: 10px; font-size: 0.85rem; padding: 8px;" onclick="addMultipleReminders()">
+                        <i class="fas fa-plus"></i> Tambah Pengingat Lainnya
+                    </button>
+                </div>
+                
+                <input type="text" id="task-tags" placeholder="Tag (cth: #urgent)" style="width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text-main);">
+                <button class="btn-add" onclick="addTask()"><i class="fas fa-plus"></i> Tambah Tugas</button>
+            </div>
+
+            <div class="flex-between" style="margin-bottom: 15px;">
+                <h3>Daftar Tugas</h3>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="search-input" placeholder="Cari..." style="padding: 7px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main);" width="200px" font-size="1rem;" onkeyup="renderTasks()">
+                    <button class="icon-btn" onclick="startPomodoro()"><i class="fas fa-stopwatch"></i></button>
+                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterTasks('all')">Semua</button>
+                <button class="filter-btn" onclick="filterTasks('active')">Aktif</button>
+                <button class="filter-btn" onclick="filterTasks('completed')">Selesai</button>
+                <button class="filter-btn" onclick="filterTasks('reminder')">Dengan Pengingat</button>
+            </div>
+
+            <div id="task-list-container">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+
+        <!-- CALENDAR VIEW -->
+        <div id="view-calendar" class="view-section">
+            <div class="flex-between" style="margin-bottom: 10px;">
+                <h3 id="cal-month-year">Bulan Ini</h3>
+                <div>
+                    <button class="icon-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <button class="icon-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Calendar injected here -->
+            </div>
+        </div>
+
+        <!-- HABITS VIEW -->
+        <div id="view-habits" class="view-section">
+            <div class="smart-input-container">
+                <input type="text" id="habit-input" placeholder="Nama kebiasaan (cth: Minum 2L air)">
+                <button class="btn-add" onclick="addHabit()">Buat Habit</button>
+            </div>
+            <div id="habit-list-container"></div>
+        </div>
+
+        <!-- STATS VIEW -->
+        <div id="view-stats" class="view-section">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">0</div>
+                <div>Total Tugas Selesai</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-streak">0</div>
+                <div>Habit Streak Terpanjang</div>
+            </div>
+            <button class="btn-add" style="background: #25D366;" onclick="shareProgress()"><i class="fab fa-whatsapp"></i> Share Progress WA</button>
+        </div>
+    </main>
+
+    <!-- Pomodoro Modal -->
+    <div id="pomodoro-modal" class="modal">
+        <div class="modal-content">
+            <h2>Focus Mode</h2>
+            <div class="timer-display" id="timer">25:00</div>
+            <div class="timer-controls">
+                <button class="btn-start" onclick="toggleTimer()" id="timer-btn">Mulai</button>
+                <button class="btn-reset" onclick="resetTimer()">Reset</button>
+                <button class="btn-reset" onclick="closePomodoro()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content reminder-modal-content" style="text-align: left;">
+            <h3>Edit Tugas</h3>
+            <input type="hidden" id="edit-id">
+            <label>Judul</label>
+            <input type="text" id="edit-title" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text-main);">
+            <label>Prioritas</label>
+            <select id="edit-priority" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+                <option value="low">Low</option>
+                <option value="med">Medium</option>
+                <option value="high">High</option>
+            </select>
+            
+            <!-- Edit Reminder Section -->
+            <div style="margin-top: 15px; padding: 10px; background: var(--bg); border-radius: 8px;">
+                <label style="font-weight: 600;"><i class="fas fa-bell"></i> Pengingat</label>
+                <div id="edit-reminder-list" class="reminder-list"></div>
+                <button type="button" class="btn-add" style="font-size: 0.8rem; padding: 8px;" onclick="addReminderToTask()">
+                    <i class="fas fa-plus"></i> Tambah Pengingat
+                </button>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn-add" onclick="saveEdit()">Simpan</button>
+                <button class="btn-reset" onclick="document.getElementById('edit-modal').style.display='none'">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi Reminder Modal -->
+    <div id="reminder-modal" class="modal">
+        <div class="modal-content reminder-modal-content">
+            <h3><i class="fas fa-bell"></i> Tambah Pengingat</h3>
+            
+            <div class="form-group">
+                <label>Jenis Pengingat</label>
+                <select id="modal-reminder-type" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+                    <option value="once">Sekali</option>
+                    <option value="daily">Harian</option>
+                    <option value="weekly">Mingguan</option>
+                    <option value="monthly">Bulanan</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="modal-custom-options" style="display: none;">
+                <label>Custom Interval</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="modal-custom-value" placeholder="Jumlah" min="1" value="1" style="flex: 1; padding: 10px;">
+                    <select id="modal-custom-unit" style="flex: 1; padding: 10px;">
+                        <option value="hours">Jam</option>
+                        <option value="days">Hari</option>
+                        <option value="weeks">Minggu</option>
+                    </select>
+                </div>
+                <label style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="modal-until-delete" checked>
+                    <span>Berulang sampai dihapus</span>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>Waktu</label>
+                <input type="time" id="modal-reminder-time" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-add" onclick="saveModalReminder()">Tambah</button>
+                <button class="btn-reset" onclick="closeReminderModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio for Notification -->
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" loop></audio>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, update, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // ==========================================
+        // CONFIG FIREBASE (GANTI DISINI)
+        // ==========================================
+        const firebaseConfig = {
+  apiKey: "AIzaSyAn7gIui9U5Yt6dDjJAX-gIUxQCkzkwz-o",
+  authDomain: "hutang-notes.firebaseapp.com",
+  databaseURL: "https://hutang-notes-default-rtdb.firebaseio.com",
+  projectId: "hutang-notes",
+  storageBucket: "hutang-notes.firebasestorage.app",
+  messagingSenderId: "705787619261",
+  appId: "1:705787619261:web:44ba4dfad2535d202e94d4"
+};
+        // ==========================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const tasksRef = ref(db, 'tasks');
+        const habitsRef = ref(db, 'habits');
+
+        // --- Global State ---
+        let allTasks = [];
+        let allHabits = [];
+        let timerInterval;
+        let timeLeft = 25 * 60;
+        let isTimerRunning = false;
+        let notifiedTasks = new Set();
+        let currentFilter = 'all';
+        let pendingReminders = [];
+        let currentEditTaskId = null;
+
+        // --- Init ---
+        window.addEventListener('DOMContentLoaded', () => {
+            checkUserLogin();
+            loadData();
+            setupDateInputs();
+            checkTheme();
+            checkNotificationPermission();
+            setupReminderOptions();
+            // Start reminder checker (every 30 seconds)
+            setInterval(checkReminders, 30000);
+        });
+
+        function checkUserLogin() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                document.getElementById('current-user').textContent = currentUser;
+            } else {
+                // Check Firebase auth
+                // For now, redirect to login if no local user
+                // window.location.href = 'login.html';
+            }
+        }
+
+        window.logout = () => {
+            if (confirm('Logout dari aplikasi?')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        };
+
+        function loadData() {
+            onValue(tasksRef, (snapshot) => {
+                const data = snapshot.val();
+                allTasks = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+                allTasks.sort((a, b) => {
+                    if (a.pinned === b.pinned) return new Date(a.date) - new Date(b.date);
+                    return b.pinned ? 1 : -1;
+                });
+                renderTasks();
+                renderCalendar();
+                updateStats();
+                checkReminders();
+            });
+
+            onValue(habitsRef, (snapshot) => {
+                const data = snapshot.val();
+                allHabits = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
+                renderHabits();
+                updateStats();
+            });
+        }
+
+        // --- Notification System ---
+        window.checkNotificationPermission = () => {
+            if (!("Notification" in window)) {
+                console.log("Browser tidak support notifikasi");
+                return;
+            }
+            
+            if (Notification.permission === "default") {
+                document.getElementById('notif-banner').style.display = 'flex';
+            } else if (Notification.permission === "granted") {
+                document.getElementById('notif-banner').style.display = 'none';
+            }
+        };
+
+        window.requestNotificationPermission = () => {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    document.getElementById('notif-banner').style.display = 'none';
+                    new Notification("Super Planner", {
+                        body: "Notifikasi diaktifkan! Anda akan seringkat saat waktu tugas tiba.",
+                        icon: "https://cdn-icons-png.flaticon.com/512/2693/2693507.png"
+                    });
+                }
+            });
+        };
+
+        window.sendNotification = (title, body) => {
+    let repeatCount = 0;
+    let maxRepeat = 3;
+    
+
+    const audio = document.getElementById('notif-sound');
+
+    function playAlarm() {
+        // 🔊 Bunyi alarm
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        }
+
+        // 🔔 Notifikasi browser (tidak hilang otomatis)
+        if (Notification.permission === "granted") {
+            new Notification(title, {
+                body: body,
+                requireInteraction: true,
+                vibrate: [200, 100, 200]
+            });
+        }
+
+        // 📢 Popup paksa
+        alert(`🔔 ${title}\n\n${body}`);
+
+        repeatCount++;
+
+        // 🔁 Ulang beberapa kali (seperti alarm)
+        if (repeatCount < maxRepeat) {
+            setTimeout(playAlarm, 5000);
+        } else {
+            // 🛑 stop audio setelah selesai
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        }
+    }
+
+    playAlarm();
+};
+
+        // --- Advanced Reminder System ---
+        window.checkReminders = () => {
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5); // HH:MM
+            
+            allTasks.forEach(task => {
+                if (task.completed) return;
+                
+                // Check reminders array
+                if (task.reminders && task.reminders.length > 0) {
+                    task.reminders.forEach((reminder, index) => {
+                        if (!reminder.time) return;
+                        
+                        const shouldNotify = checkReminderCondition(reminder, now, task);
+                        
+                        const reminderKey = `${task.id}-${index}-${now.toDateString()}`;
+                        
+                        if (shouldNotify && !notifiedTasks.has(reminderKey)) {
+                            sendNotification("⏰ Pengingat Tugas!", `${task.text}\nWaktu: ${reminder.time} (${getReminderLabel(reminder.type)})`);
+                            notifiedTasks.add(reminderKey);
+                            
+                            // Clean up old keys
+                            if (notifiedTasks.size > 1000) {
+                                const keysArray = Array.from(notifiedTasks);
+                                notifiedTasks = new Set(keysArray.slice(-500));
+                            }
+                        }
+                    });
+                }
+                
+                // Legacy single reminder support
+                if (task.time && task.date) {
+                    const taskDateTime = `${task.date}T${task.time}`;
+                    const taskTime = new Date(taskDateTime);
+                    const timeDiff = taskTime - now;
+                    
+                    if (timeDiff >= -60000 && timeDiff <= 300000 && !notifiedTasks.has(task.id)) {
+                        sendNotification("⏰ Pengingat Tugas!", `${task.text}\nWaktu: ${task.time}`);
+                        notifiedTasks.add(task.id);
+                    }
+                    
+                    if (timeDiff < 0) {
+                        notifiedTasks.delete(task.id);
+                    }
+                }
+            });
+        };
+
+        function checkReminderCondition(reminder, now, task) {
+            const reminderTime = reminder.time;
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            // Check if time matches
+            if (reminderTime !== currentTime) return false;
+            
+            const dayOfWeek = now.getDay(); // 0 = Sunday
+            const dateOfMonth = now.getDate();
+            
+            switch (reminder.type) {
+                case 'once':
+                    // Check if this reminder was already triggered today
+                    const today = now.toDateString();
+                    const lastTriggered = reminder.lastTriggered;
+                    return lastTriggered !== today;
+                    
+                case 'daily':
+                    return true;
+                    
+                case 'weekly':
+                    // Trigger on specific day of week
+                    return reminder.dayOfWeek === dayOfWeek;
+                    
+                case 'monthly':
+                    // Trigger on specific day of month
+                    return reminder.dayOfMonth === dateOfMonth;
+                    
+                case 'custom':
+                    // Custom interval
+                    if (reminder.untilDelete === false) {
+                        // Check if custom interval has passed
+                        const lastTrigger = reminder.lastTriggered ? new Date(reminder.lastTriggered) : null;
+                        if (!lastTrigger) return true;
+                        
+                        const diff = now - lastTrigger;
+                        const intervalMs = getCustomIntervalMs(reminder);
+                        return diff >= intervalMs;
+                    }
+                    return true;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        function getCustomIntervalMs(reminder) {
+            const value = reminder.value || 1;
+            const unit = reminder.unit || 'days';
+            
+            switch (unit) {
+                case 'hours': return value * 60 * 60 * 1000;
+                case 'days': return value * 24 * 60 * 60 * 1000;
+                case 'weeks': return value * 7 * 24 * 60 * 60 * 1000;
+                default: return value * 24 * 60 * 60 * 1000;
+            }
+        }
+
+        function getReminderLabel(type) {
+            switch (type) {
+                case 'once': return 'Sekali';
+                case 'daily': return 'Harian';
+                case 'weekly': return 'Mingguan';
+                case 'monthly': return 'Bulanan';
+                case 'custom': return 'Custom';
+                default: return type;
+            }
+        }
+
+        // --- Reminder UI Functions ---
+        function setupReminderOptions() {
+            const options = document.querySelectorAll('.reminder-option input');
+            options.forEach(option => {
+                option.addEventListener('change', (e) => {
+                    document.querySelectorAll('.reminder-option').forEach(o => o.classList.remove('active'));
+                    e.target.parentElement.classList.add('active');
+                    
+                    const customDiv = document.getElementById('custom-reminder-options');
+                    if (e.target.value === 'custom') {
+                        customDiv.classList.add('show');
+                    } else {
+                        customDiv.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Set default active
+            document.getElementById('reminder-once').classList.add('active');
+        }
+
+        window.addMultipleReminders = () => {
+            document.getElementById('reminder-modal').style.display = 'flex';
+        };
+
+        window.saveModalReminder = () => {
+            const type = document.getElementById('modal-reminder-type').value;
+            const time = document.getElementById('modal-reminder-time').value;
+            
+            if (!time) {
+                alert('Mohon pilih waktu pengingat');
+                return;
+            }
+            
+            const reminder = {
+                type: type,
+                time: time,
+                createdAt: Date.now()
+            };
+            
+            if (type === 'custom') {
+                reminder.value = parseInt(document.getElementById('modal-custom-value').value) || 1;
+                reminder.unit = document.getElementById('modal-custom-unit').value;
+                reminder.untilDelete = document.getElementById('modal-until-delete').checked;
+            } else if (type === 'weekly') {
+                reminder.dayOfWeek = new Date().getDay();
+            } else if (type === 'monthly') {
+                reminder.dayOfMonth = new Date().getDate();
+            }
+            
+            pendingReminders.push(reminder);
+            renderPendingReminders();
+            closeReminderModal();
+        };
+
+        window.closeReminderModal = () => {
+            document.getElementById('reminder-modal').style.display = 'none';
+        };
+
+        function renderPendingReminders() {
+            const container = document.getElementById('multi-reminder-list');
+            container.innerHTML = '';
+            
+            pendingReminders.forEach((reminder, index) => {
+                const el = document.createElement('div');
+                el.className = 'reminder-item';
+                el.innerHTML = `
+                    <span class="badge-reminder-type">${getReminderLabel(reminder.type)}</span>
+                    <span><i class="fas fa-clock"></i> ${reminder.time}</span>
+                    <i class="fas fa-times remove-reminder" onclick="removePendingReminder(${index})"></i>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        window.removePendingReminder = (index) => {
+            pendingReminders.splice(index, 1);
+            renderPendingReminders();
+        };
+
+        // --- Natural Language Processing (Lite) ---
+        window.parseNaturalLanguage = () => {
+            const input = document.getElementById('task-input').value.toLowerCase();
+            const today = new Date();
+            
+            if (input.includes('besok')) {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('task-date').valueAsDate = tomorrow;
+            } 
+            else if (input.includes('lusa')) {
+                const dayAfter = new Date(today);
+                dayAfter.setDate(dayAfter.getDate() + 2);
+                document.getElementById('task-date').valueAsDate = dayAfter;
+            }
+            else {
+                document.getElementById('task-date').valueAsDate = today;
+            }
+
+            if (input.includes('prioritas tinggi') || input.includes('urgent')) {
+                document.getElementById('task-priority').value = 'high';
+            } else if (input.includes('prioritas rendah')) {
+                document.getElementById('task-priority').value = 'low';
+            } else {
+                document.getElementById('task-priority').value = 'med';
+            }
+
+            const timeMatch = input.match(/jam\s(\d{1,2})(?::(\d{2}))?/);
+            if (timeMatch) {
+                let h = timeMatch[1].padStart(2, '0');
+                let m = timeMatch[2] || '00';
+                document.getElementById('task-time').value = `${h}:${m}`;
+            }
+        };
+
+        function setupDateInputs() {
+            document.getElementById('task-date').valueAsDate = new Date();
+        }
+
+        // --- Task Logic ---
+        window.addTask = () => {
+            const text = document.getElementById('task-input').value;
+            if (!text) return alert('Isi tugas dulu!');
+
+            const reminderType = document.querySelector('input[name="reminder-type"]:checked').value;
+            const time = document.getElementById('task-time').value;
+            
+            // Build reminders array
+            let reminders = [];
+            
+            if (time) {
+                const primaryReminder = {
+                    type: reminderType,
+                    time: time,
+                    createdAt: Date.now()
+                };
+                
+                if (reminderType === 'custom') {
+                    primaryReminder.value = parseInt(document.getElementById('custom-repeat-value').value) || 1;
+                    primaryReminder.unit = document.getElementById('custom-repeat-type').value;
+                    primaryReminder.untilDelete = document.getElementById('custom-until-delete').checked;
+                } else if (reminderType === 'weekly') {
+                    primaryReminder.dayOfWeek = new Date().getDay();
+                } else if (reminderType === 'monthly') {
+                    primaryReminder.dayOfMonth = new Date().getDate();
+                }
+                
+                reminders.push(primaryReminder);
+            }
+            
+            // Add pending reminders from multi-reminder
+            reminders = [...reminders, ...pendingReminders];
+
+            const newTask = {
+                text: text,
+                date: document.getElementById('task-date').value,
+                time: time || null,
+                priority: document.getElementById('task-priority').value,
+                category: document.getElementById('task-category').value,
+                tags: document.getElementById('task-tags').value,
+                completed: false,
+                pinned: false,
+                createdAt: Date.now(),
+                notified: false,
+                reminders: reminders
+            };
+
+            push(tasksRef, newTask);
+            
+            // Reset form
+            document.getElementById('task-input').value = '';
+            document.getElementById('task-tags').value = '';
+            pendingReminders = [];
+            renderPendingReminders();
+        };
+
+        window.toggleTask = (id, currentStatus) => {
+            update(ref(db, `tasks/${id}`), { completed: !currentStatus });
+            if (!currentStatus) notifiedTasks.delete(id);
+        };
+
+        window.pinTask = (id, currentPin) => {
+            update(ref(db, `tasks/${id}`), { pinned: !currentPin });
+        };
+
+        window.deleteTask = (id) => {
+            if(confirm('Hapus tugas ini?')) {
+                remove(ref(db, `tasks/${id}`));
+                notifiedTasks.delete(id);
+            }
+        };
+
+        window.openEdit = (id) => {
+            const task = allTasks.find(t => t.id === id);
+            currentEditTaskId = id;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-title').value = task.text;
+            document.getElementById('edit-priority').value = task.priority;
+            
+            // Render existing reminders
+            renderEditReminders(task.reminders || []);
+            
+            document.getElementById('edit-modal').style.display = 'flex';
+        };
+
+        function renderEditReminders(reminders) {
+            const container = document.getElementById('edit-reminder-list');
+            container.innerHTML = '';
+            
+            if (reminders.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-sub); font-size: 0.85rem; padding: 10px;">Belum ada pengingat</div>';
+                return;
+            }
+            
+            reminders.forEach((reminder, index) => {
+                const el = document.createElement('div');
+                el.className = 'reminder-list-item';
+                el.innerHTML = `
+                    <div class="reminder-info">
+                        <div class="reminder-type">${getReminderLabel(reminder.type)}</div>
+                        <div class="reminder-time"><i class="fas fa-clock"></i> ${reminder.time}</div>
+                    </div>
+                    <button class="icon-btn delete" onclick="removeEditReminder(${index})"><i class="fas fa-trash"></i></button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        window.removeEditReminder = (index) => {
+            const task = allTasks.find(t => t.id === currentEditTaskId);
+            const reminders = task.reminders || [];
+            reminders.splice(index, 1);
+            update(ref(db, `tasks/${currentEditTaskId}`), { reminders: reminders });
+            renderEditReminders(reminders);
+        };
+
+        window.addReminderToTask = () => {
+            document.getElementById('reminder-modal').style.display = 'flex';
+        };
+
+        window.saveEdit = () => {
+            const id = document.getElementById('edit-id').value;
+            const newText = document.getElementById('edit-title').value;
+            const newPrio = document.getElementById('edit-priority').value;
+            update(ref(db, `tasks/${id}`), { text: newText, priority: newPrio });
+            document.getElementById('edit-modal').style.display = 'none';
+        };
+
+        window.renderTasks = () => {
+            const container = document.getElementById('task-list-container');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            container.innerHTML = '';
+
+            let filtered = allTasks.filter(t => t.text.toLowerCase().includes(search));
+            
+            // Apply filter
+            if (currentFilter === 'active') {
+                filtered = filtered.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                filtered = filtered.filter(t => t.completed);
+            } else if (currentFilter === 'reminder') {
+                filtered = filtered.filter(t => t.reminders && t.reminders.length > 0);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-sub);">Tidak ada tugas ditemukan</div>';
+                return;
+            }
+
+            filtered.forEach(task => {
+                const el = document.createElement('div');
+                el.className = `task-item p-${task.priority} ${task.completed ? 'completed' : ''} ${task.pinned ? 'pinned' : ''}`;
+                
+                // Check if reminder should show
+                let reminderBadge = '';
+                const hasReminders = task.reminders && task.reminders.length > 0;
+                if (!task.completed && hasReminders) {
+                    reminderBadge = `<span class="badge badge-reminder"><i class="fas fa-bell"></i> ${task.reminders.length} alarm</span>`;
+                } else if (!task.completed && task.time && task.date) {
+                    const taskTime = new Date(`${task.date}T${task.time}`);
+                    const now = new Date();
+                    const diff = taskTime - now;
+                    if (diff > 0 && diff <= 3600000) {
+                        reminderBadge = `<span class="badge badge-reminder"><i class="fas fa-bell"></i> Segera</span>`;
+                    }
+                }
+                
+                let badges = '';
+                if(task.priority === 'high') badges += `<span class="badge badge-p-high">High</span>`;
+                else if(task.priority === 'med') badges += `<span class="badge badge-p-med">Med</span>`;
+                else badges += `<span class="badge badge-p-low">Low</span>`;
+                
+                badges += `<span class="badge badge-cat">${task.category}</span>`;
+                if(task.tags) badges += `<span class="badge" style="background:transparent; border:1px solid var(--border)">${task.tags}</span>`;
+                if(reminderBadge) badges += reminderBadge;
+
+                el.innerHTML = `
+                    <div class="task-check" onclick="toggleTask('${task.id}', ${task.completed})">
+                        ${task.completed ? '<i class="fas fa-check"></i>' : ''}
+                    </div>
+                    <div class="task-content">
+                        <div class="task-title">${task.text}</div>
+                        <div class="task-meta">
+                            <span><i class="far fa-calendar"></i> ${formatDate(task.date)}</span>
+                            ${task.time ? `<span><i class="far fa-clock"></i> ${task.time}</span>` : ''}
+                            ${badges}
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="icon-btn" onclick="pinTask('${task.id}', ${task.pinned})"><i class="fas fa-thumbtack"></i></button>
+                        <button class="icon-btn" onclick="openEdit('${task.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="icon-btn delete" onclick="deleteTask('${task.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        };
+
+        window.filterTasks = (filter) => {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTasks();
+        };
+
+        // --- Habit Logic ---
+        window.addHabit = () => {
+            const name = document.getElementById('habit-input').value;
+            if(!name) return;
+            push(habitsRef, {
+                name: name,
+                count: 0,
+                lastDone: null
+            });
+            document.getElementById('habit-input').value = '';
+        };
+
+        window.checkHabit = (id, currentCount) => {
+            const today = new Date().toDateString();
+            update(ref(db, `habits/${id}`), { count: currentCount + 1, lastDone: today });
+        };
+
+        window.renderHabits = () => {
+            const container = document.getElementById('habit-list-container');
+            container.innerHTML = '';
+            allHabits.forEach(h => {
+                const el = document.createElement('div');
+                el.className = 'habit-item';
+                el.innerHTML = `
+                    <div>
+                        <div style="font-weight:600;">${h.name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-sub);">Total: ${h.count} kali</div>
+                    </div>
+                    <button class="icon-btn" style="color:var(--success); font-size:1.5rem;" onclick="checkHabit('${h.id}', ${h.count})">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                `;
+                container.appendChild(el);
+            });
+        };
+
+        // --- Calendar Logic ---
+        let currentCalDate = new Date();
+        window.changeMonth = (delta) => {
+            currentCalDate.setMonth(currentCalDate.getMonth() + delta);
+            renderCalendar();
+        };
+
+        window.renderCalendar = () => {
+            const grid = document.getElementById('calendar-grid');
+            const monthLabel = document.getElementById('cal-month-year');
+            grid.innerHTML = '';
+            
+            const year = currentCalDate.getFullYear();
+            const month = currentCalDate.getMonth();
+            
+            monthLabel.innerText = new Date(year, month).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+
+            const todayStr = new Date().toDateString();
+            
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = new Date(year, month, d).toISOString().split('T')[0];
+                const isToday = new Date(year, month, d).toDateString() === todayStr;
+                
+                const tasksCount = allTasks.filter(t => t.date === dateStr && !t.completed).length;
+                let dots = '';
+                for(let k=0; k<Math.min(tasksCount, 4); k++) dots += `<span class="cal-dot"></span>`;
+
+                grid.innerHTML += `
+                    <div class="cal-day ${isToday ? 'today' : ''}">
+                        <span class="day-num">${d}</span>
+                        <div>${dots}</div>
+                    </div>
+                `;
+            }
+        };
+
+        // --- Pomodoro Logic ---
+        window.startPomodoro = () => {
+            document.getElementById('pomodoro-modal').style.display = 'flex';
+        };
+        window.closePomodoro = () => {
+            document.getElementById('pomodoro-modal').style.display = 'none';
+            resetTimer();
+        };
+        window.toggleTimer = () => {
+            const btn = document.getElementById('timer-btn');
+            if(isTimerRunning) {
+                clearInterval(timerInterval);
+                btn.innerText = 'Lanjut';
+                isTimerRunning = false;
+            } else {
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if(timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        sendNotification("⏰ Pomodoro Selesai!", "Waktunya istirahat sejenak.");
+                        resetTimer();
+                    }
+                }, 1000);
+                btn.innerText = 'Pause';
+                isTimerRunning = true;
+            }
+        };
+        window.resetTimer = () => {
+            clearInterval(timerInterval);
+            timeLeft = 25 * 60;
+            isTimerRunning = false;
+            document.getElementById('timer-btn').innerText = 'Mulai';
+            updateTimerDisplay();
+        };
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }
+
+        // --- Stats & Utils ---
+        window.updateStats = () => {
+            const completed = allTasks.filter(t => t.completed).length;
+            document.getElementById('stat-total').innerText = completed;
+            
+            const maxStreak = allHabits.reduce((max, h) => h.count > max ? h.count : max, 0);
+            document.getElementById('stat-streak').innerText = maxStreak;
+        };
+
+        window.shareProgress = () => {
+            const completed = allTasks.filter(t => t.completed).length;
+            const total = allTasks.length;
+            const text = `📊 *Laporan Produktivitas*\n\nSelesai: ${completed}/${total} tugas.\nHabit Streak: ${allHabits.reduce((a,b)=>a+b.count,0)}\n\n#SuperPlanner`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        };
+
+        window.switchTab = (tabName) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        window.toggleTheme = () => {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        };
+
+        function checkTheme() {
+            const saved = localStorage.getItem('theme');
+            if(saved) document.body.setAttribute('data-theme', saved);
+            else if(window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        }
+        
+        // Handle modal reminder type change
+        document.getElementById('modal-reminder-type').addEventListener('change', (e) => {
+            const customOptions = document.getElementById('modal-custom-options');
+            if (e.target.value === 'custom') {
+                customOptions.style.display = 'block';
+            } else {
+                customOptions.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
