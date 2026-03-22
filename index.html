@@ -1132,8 +1132,11 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, update, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
+   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, update, set, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
     const firebaseConfig = {
-        // PASTIKAN API KEY INI LENGKAP (Cek di Project Settings)
         apiKey: "AIzaSyAn7gIui9U5Yt6dDjJAX-gIUxQCkzkwz-o", 
         authDomain: "hutang-notes.firebaseapp.com",
         databaseURL: "https://hutang-notes-default-rtdb.firebaseio.com",
@@ -1143,56 +1146,70 @@
         appId: "1:705787619261:web:44ba4dfad2535d202e94d4"
     };
 
+    // Inisialisasi Firebase (HANYA SATU KALI)
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const tasksRef = ref(db, 'tasks');
+    const habitsRef = ref(db, 'habits');
 
-    // --- FUNGSI ADD TASK YANG SUDAH DIPERBAIKI ---
+    // --- Global State ---
+    let allTasks = [];
+    let allHabits = [];
+    let timerInterval;
+    let timeLeft = 25 * 60;
+    let isTimerRunning = false;
+    let notifiedTasks = new Set();
+    let currentFilter = 'all';
+    let pendingReminders = [];
+    let currentEditTaskId = null;
+
+    // --- FUNGSI ADD TASK ---
     window.addTask = () => {
         const text = document.getElementById('task-input').value;
         if (!text) return alert('Isi tugas dulu!');
 
+        const reminderType = document.querySelector('input[name="reminder-type"]:checked').value;
+        const time = document.getElementById('task-time').value;
+        
+        let reminders = [];
+        if (time) {
+            const primaryReminder = {
+                type: reminderType,
+                time: time,
+                createdAt: Date.now()
+            };
+            reminders.push(primaryReminder);
+        }
+        reminders = [...reminders, ...pendingReminders];
+
         const newTask = {
             text: text,
             date: document.getElementById('task-date').value,
-            time: document.getElementById('task-time').value || null,
+            time: time || null,
             priority: document.getElementById('task-priority').value,
             category: document.getElementById('task-category').value,
+            tags: document.getElementById('task-tags').value,
             completed: false,
-            createdAt: Date.now()
+            pinned: false,
+            createdAt: Date.now(),
+            reminders: reminders
         };
 
-        console.log("Mencoba mengirim data...", newTask);
-
-        // Tambahkan feedback error di sini
+        // Kirim ke Firebase dengan handling sukses/gagal
         push(tasksRef, newTask)
             .then(() => {
-                console.log("✅ Data BERHASIL masuk ke Firebase!");
+                console.log("✅ Berhasil simpan!");
                 document.getElementById('task-input').value = '';
-                alert("Tugas berhasil disimpan!");
+                document.getElementById('task-tags').value = '';
+                pendingReminders = [];
+                renderPendingReminders();
+                alert("Tugas tersimpan!");
             })
-            .catch((error) => {
-                console.error("❌ GAGAL simpan:", error);
-                alert("Koneksi gagal: " + error.message);
+            .catch((err) => {
+                console.error("❌ Gagal simpan:", err);
+                alert("Gagal simpan: " + err.message);
             });
     };
-        // ==========================================
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const tasksRef = ref(db, 'tasks');
-        const habitsRef = ref(db, 'habits');
-
-        // --- Global State ---
-        let allTasks = [];
-        let allHabits = [];
-        let timerInterval;
-        let timeLeft = 25 * 60;
-        let isTimerRunning = false;
-        let notifiedTasks = new Set();
-        let currentFilter = 'all';
-        let pendingReminders = [];
-        let currentEditTaskId = null;
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', () => {
