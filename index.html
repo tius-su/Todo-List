@@ -1129,21 +1129,53 @@
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" loop></audio>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, update, set, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, update, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // ==========================================
-        // CONFIG FIREBASE (GANTI DISINI)
-        // ==========================================
-        const firebaseConfig = {
-  apiKey: "AIzaSyAn7gIui9U5Yt6dDjJAX-gIUxQCkzkwz-o",
-  authDomain: "hutang-notes.firebaseapp.com",
-  databaseURL: "https://hutang-notes-default-rtdb.firebaseio.com",
-  projectId: "hutang-notes",
-  storageBucket: "hutang-notes.firebasestorage.app",
-  messagingSenderId: "705787619261",
-  appId: "1:705787619261:web:44ba4dfad2535d202e94d4"
-};
+    const firebaseConfig = {
+        // PASTIKAN API KEY INI LENGKAP (Cek di Project Settings)
+        apiKey: "AIzaSyAn7gIui9U5Yt6dDjJAX-gIUxQCkzkwz-o", 
+        authDomain: "hutang-notes.firebaseapp.com",
+        databaseURL: "https://hutang-notes-default-rtdb.firebaseio.com",
+        projectId: "hutang-notes",
+        storageBucket: "hutang-notes.firebasestorage.app",
+        messagingSenderId: "705787619261",
+        appId: "1:705787619261:web:44ba4dfad2535d202e94d4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const tasksRef = ref(db, 'tasks');
+
+    // --- FUNGSI ADD TASK YANG SUDAH DIPERBAIKI ---
+    window.addTask = () => {
+        const text = document.getElementById('task-input').value;
+        if (!text) return alert('Isi tugas dulu!');
+
+        const newTask = {
+            text: text,
+            date: document.getElementById('task-date').value,
+            time: document.getElementById('task-time').value || null,
+            priority: document.getElementById('task-priority').value,
+            category: document.getElementById('task-category').value,
+            completed: false,
+            createdAt: Date.now()
+        };
+
+        console.log("Mencoba mengirim data...", newTask);
+
+        // Tambahkan feedback error di sini
+        push(tasksRef, newTask)
+            .then(() => {
+                console.log("✅ Data BERHASIL masuk ke Firebase!");
+                document.getElementById('task-input').value = '';
+                alert("Tugas berhasil disimpan!");
+            })
+            .catch((error) => {
+                console.error("❌ GAGAL simpan:", error);
+                alert("Koneksi gagal: " + error.message);
+            });
+    };
         // ==========================================
 
         const app = initializeApp(firebaseConfig);
