@@ -18,7 +18,9 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        return cache.addAll(urlsToCache).catch(err => {
+          console.log('Some files failed to cache:', err);
+        });
       })
       .catch(err => {
         console.log('Cache install error:', err);
@@ -46,7 +48,7 @@ self.addEventListener('activate', event => {
   return self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - serve from network first, fallback to cache
 self.addEventListener('fetch', event => {
   // Skip cross-origin requests except for Firebase and fonts
   if (!event.request.url.startsWith(self.location.origin) && 
@@ -58,33 +60,31 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-        
-        return fetch(event.request).then(response => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-          
-          // Clone the response
-          var responseToCache = response.clone();
-          
+        // Clone and cache successful responses
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then(cache => {
               cache.put(event.request, responseToCache);
             });
-            
-          return response;
-        });
+        }
+        return response;
       })
       .catch(() => {
-        // Return offline page if available
-        return caches.match('./index.html');
+        // Fallback to cache if network fails
+        return caches.match(event.request)
+          .then(response => {
+            if (response) {
+              return response;
+            }
+            // Return offline page for navigation requests
+            if (event.request.mode === 'navigate') {
+              return caches.match('./index.html');
+            }
+            return null;
+          });
       })
   );
 });
@@ -92,15 +92,11 @@ self.addEventListener('fetch', event => {
 // Handle push notifications
 self.addEventListener('push', event => {
   const options = {
-    body: event.data ? event.data.text() : '你有新的任务提醒！',
+    body: event.data ? event.data.text() : 'Ada tugas baru!',
     icon: './logo.png',
     badge: './logo.png',
     vibrate: [200, 100, 200],
-    requireInteraction: true,
-    actions: [
-      { action: 'open', title: '打开应用' },
-      { action: 'dismiss', title: '关闭' }
-    ]
+    requireInteraction: true
   };
   
   event.waitUntil(
@@ -112,19 +108,7 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   
-  if (event.action === 'open' || !event.action) {
-    event.waitUntil(
-      clients.openWindow('./index.html')
-    );
-  }
-});
-
-// Background sync for offline data
-self.addEventListener('sync', event => {
-  if (event.tag === 'sync-tasks') {
-    event.waitUntil(
-      // Sync logic would go here
-      console.log('Background sync triggered')
-    );
-  }
+  event.waitUntil(
+    clients.openWindow('./index.html')
+  );
 });
