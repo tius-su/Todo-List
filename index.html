@@ -6,6 +6,12 @@
     <title>Super Planner Pro + Notifikasi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Super Planner">
+    <link rel="apple-touch-icon" href="logo.png">
     
     <style>
         :root {
@@ -53,6 +59,37 @@
         }
 
         .brand { font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .brand img { width: 32px; height: 32px; border-radius: 8px; }
+        
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        
+        .theme-toggle {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: 0.2s;
+        }
+        .theme-toggle:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .user-info {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px;
+        }
         
         .nav-tabs {
             display: flex;
@@ -109,7 +146,7 @@
 
         .input-options { display: flex; gap: 8px; flex-wrap: wrap; }
         
-        select, input[type="date"], input[type="time"] {
+        select, input[type="date"], input[type="time"], input[type="number"] {
             padding: 8px;
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -128,6 +165,107 @@
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
+            transition: 0.2s;
+        }
+        .btn-add:hover { background: var(--primary-dark); }
+
+        /* --- Reminder Section --- */
+        .reminder-section {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .reminder-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .reminder-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .reminder-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        
+        .reminder-option.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .reminder-option input {
+            display: none;
+        }
+        
+        .custom-reminder {
+            display: none;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .custom-reminder.show { display: flex; }
+        
+        .custom-reminder input, .custom-reminder select {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text-main);
+            font-size: 0.85rem;
+        }
+
+        .multi-reminder-list {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        
+        .reminder-item .badge-reminder-type {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+        }
+        
+        .remove-reminder {
+            color: var(--danger);
+            cursor: pointer;
+            margin-left: auto;
         }
 
         /* --- Task List --- */
@@ -220,12 +358,14 @@
             border-radius: 12px;
             margin-bottom: 15px;
             text-align: center;
+            border: 1px solid var(--border);
         }
         .stat-number { font-size: 2rem; font-weight: 700; color: var(--primary); }
         
         .habit-item {
             display: flex; justify-content: space-between; align-items: center;
             background: var(--surface); padding: 15px; border-radius: 10px; margin-bottom: 10px;
+            border: 1px solid var(--border);
         }
         .habit-streak { color: var(--warning); font-weight: 600; }
 
@@ -269,9 +409,77 @@
             margin-left: 10px;
         }
 
+        /* --- Reminder Modal --- */
+        .reminder-modal-content {
+            text-align: left;
+            max-width: 500px;
+        }
+        
+        .reminder-modal-content h3 {
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .reminder-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .reminder-list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .reminder-list-item .reminder-info {
+            flex: 1;
+        }
+
+        .reminder-list-item .reminder-type {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+
+        .reminder-list-item .reminder-time {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
         /* Utilities */
         .hidden { display: none; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Filter buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-sub);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -283,8 +491,17 @@
     </div>
 
     <header>
-        <div class="brand"><i class="fas fa-bolt"></i> Super Planner</div>
-        <button class="icon-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+        <div class="brand">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+            <i class="fas fa-bolt"></i> Super Planner
+        </div>
+        <div class="header-actions">
+            <span class="user-info" id="user-display">
+                <i class="fas fa-user-circle"></i> <span id="current-user">Guest</span>
+            </span>
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button class="logout-btn" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
     </header>
 
     <nav class="nav-tabs">
@@ -299,7 +516,7 @@
         <div id="view-tasks" class="view-section active">
             <div class="smart-input-container">
                 <input type="text" id="task-input" placeholder="Ketik tugas (cth: 'Rapat besok jam 10 prioritas tinggi')..." oninput="parseNaturalLanguage()">
-                <div class="input-options">
+                <div class="input-row">
                     <select id="task-priority">
                         <option value="low">Prioritas Rendah</option>
                         <option value="med">Prioritas Sedang</option>
@@ -311,20 +528,81 @@
                         <option value="School">Sekolah</option>
                         <option value="Health">Kesehatan</option>
                     </select>
+                </div>
+                <div class="input-row">
                     <input type="date" id="task-date">
                     <input type="time" id="task-time">
-                    <input type="text" id="task-tags" placeholder="Tag (cth: #urgent)" style="flex:2; min-width: 200px; padding:12px; font-size:1rem;">
                 </div>
+                
+                <!-- Reminder Section -->
+                <div class="reminder-section">
+                    <div class="reminder-title">
+                        <i class="fas fa-bell"></i> Pengingat
+                    </div>
+                    <div class="reminder-options">
+                        <label class="reminder-option" id="reminder-once">
+                            <input type="radio" name="reminder-type" value="once" checked>
+                            <i class="fas fa-bell"></i> Sekali
+                        </label>
+                        <label class="reminder-option" id="reminder-daily">
+                            <input type="radio" name="reminder-type" value="daily">
+                            <i class="fas fa-redo"></i> Harian
+                        </label>
+                        <label class="reminder-option" id="reminder-weekly">
+                            <input type="radio" name="reminder-type" value="weekly">
+                            <i class="fas fa-calendar-week"></i> Mingguan
+                        </label>
+                        <label class="reminder-option" id="reminder-monthly">
+                            <input type="radio" name="reminder-type" value="monthly">
+                            <i class="fas fa-calendar-alt"></i> Bulanan
+                        </label>
+                        <label class="reminder-option" id="reminder-custom">
+                            <input type="radio" name="reminder-type" value="custom">
+                            <i class="fas fa-cog"></i> Custom
+                        </label>
+                    </div>
+                    
+                    <!-- Custom Reminder Options -->
+                    <div class="custom-reminder" id="custom-reminder-options">
+                        <select id="custom-repeat-type">
+                            <option value="hours">Jam</option>
+                            <option value="days">Hari</option>
+                            <option value="weeks">Minggu</option>
+                        </select>
+                        <input type="number" id="custom-repeat-value" placeholder="Jumlah" min="1" value="1" style="width: 70px;">
+                        <span style="align-self: center; font-size: 0.85rem; color: var(--text-sub);">sekali</span>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.85rem;">
+                            <input type="checkbox" id="custom-until-delete" checked>
+                            Sampai dihapus
+                        </label>
+                    </div>
+                    
+                    <!-- Multi Reminder List -->
+                    <div class="multi-reminder-list" id="multi-reminder-list">
+                        <!-- Dynamic reminders will be added here -->
+                    </div>
+                    <button type="button" class="btn-add" style="background: var(--warning); margin-top: 10px; font-size: 0.85rem; padding: 8px;" onclick="addMultipleReminders()">
+                        <i class="fas fa-plus"></i> Tambah Pengingat Lainnya
+                    </button>
+                </div>
+                
+                <input type="text" id="task-tags" placeholder="Tag (cth: #urgent)" style="width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text-main);">
                 <button class="btn-add" onclick="addTask()"><i class="fas fa-plus"></i> Tambah Tugas</button>
             </div>
 
-            <div class="flex-between" style="margin-bottom: 25px;">
+            <div class="flex-between" style="margin-bottom: 15px;">
                 <h3>Daftar Tugas</h3>
                 <div style="display: flex; gap: 5px;">
-                    <input type="text" id="search-input" placeholder="Cari..." style="padding: 7px; border-radius: 8px; border: 1px solid var(--border);" width:250px; font-size:1rem;"
-onkeyup="renderTasks()">
+                    <input type="text" id="search-input" placeholder="Cari..." style="padding: 7px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main);" width="200px" font-size="1rem;" onkeyup="renderTasks()">
                     <button class="icon-btn" onclick="startPomodoro()"><i class="fas fa-stopwatch"></i></button>
                 </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterTasks('all')">Semua</button>
+                <button class="filter-btn" onclick="filterTasks('active')">Aktif</button>
+                <button class="filter-btn" onclick="filterTasks('completed')">Selesai</button>
+                <button class="filter-btn" onclick="filterTasks('reminder')">Dengan Pengingat</button>
             </div>
 
             <div id="task-list-container">
@@ -384,20 +662,74 @@ onkeyup="renderTasks()">
 
     <!-- Edit Modal -->
     <div id="edit-modal" class="modal">
-        <div class="modal-content" style="text-align: left;">
+        <div class="modal-content reminder-modal-content" style="text-align: left;">
             <h3>Edit Tugas</h3>
             <input type="hidden" id="edit-id">
             <label>Judul</label>
-            <input type="text" id="edit-title" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 5px;">
+            <input type="text" id="edit-title" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text-main);">
             <label>Prioritas</label>
-            <select id="edit-priority" style="width: 100%; padding: 10px; margin: 5px 0;">
+            <select id="edit-priority" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
                 <option value="low">Low</option>
                 <option value="med">Medium</option>
                 <option value="high">High</option>
             </select>
+            
+            <!-- Edit Reminder Section -->
+            <div style="margin-top: 15px; padding: 10px; background: var(--bg); border-radius: 8px;">
+                <label style="font-weight: 600;"><i class="fas fa-bell"></i> Pengingat</label>
+                <div id="edit-reminder-list" class="reminder-list"></div>
+                <button type="button" class="btn-add" style="font-size: 0.8rem; padding: 8px;" onclick="addReminderToTask()">
+                    <i class="fas fa-plus"></i> Tambah Pengingat
+                </button>
+            </div>
+            
             <div style="margin-top: 15px; display: flex; gap: 10px;">
                 <button class="btn-add" onclick="saveEdit()">Simpan</button>
                 <button class="btn-reset" onclick="document.getElementById('edit-modal').style.display='none'">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi Reminder Modal -->
+    <div id="reminder-modal" class="modal">
+        <div class="modal-content reminder-modal-content">
+            <h3><i class="fas fa-bell"></i> Tambah Pengingat</h3>
+            
+            <div class="form-group">
+                <label>Jenis Pengingat</label>
+                <select id="modal-reminder-type" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+                    <option value="once">Sekali</option>
+                    <option value="daily">Harian</option>
+                    <option value="weekly">Mingguan</option>
+                    <option value="monthly">Bulanan</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="modal-custom-options" style="display: none;">
+                <label>Custom Interval</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="modal-custom-value" placeholder="Jumlah" min="1" value="1" style="flex: 1; padding: 10px;">
+                    <select id="modal-custom-unit" style="flex: 1; padding: 10px;">
+                        <option value="hours">Jam</option>
+                        <option value="days">Hari</option>
+                        <option value="weeks">Minggu</option>
+                    </select>
+                </div>
+                <label style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="modal-until-delete" checked>
+                    <span>Berulang sampai dihapus</span>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>Waktu</label>
+                <input type="time" id="modal-reminder-time" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-add" onclick="saveModalReminder()">Tambah</button>
+                <button class="btn-reset" onclick="closeReminderModal()">Batal</button>
             </div>
         </div>
     </div>
@@ -434,17 +766,40 @@ onkeyup="renderTasks()">
         let timerInterval;
         let timeLeft = 25 * 60;
         let isTimerRunning = false;
-        let notifiedTasks = new Set(); // Track which tasks already notified
+        let notifiedTasks = new Set();
+        let currentFilter = 'all';
+        let pendingReminders = [];
+        let currentEditTaskId = null;
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', () => {
+            checkUserLogin();
             loadData();
             setupDateInputs();
             checkTheme();
             checkNotificationPermission();
+            setupReminderOptions();
             // Start reminder checker (every 30 seconds)
             setInterval(checkReminders, 30000);
         });
+
+        function checkUserLogin() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                document.getElementById('current-user').textContent = currentUser;
+            } else {
+                // Check Firebase auth
+                // For now, redirect to login if no local user
+                // window.location.href = 'login.html';
+            }
+        }
+
+        window.logout = () => {
+            if (confirm('Logout dari aplikasi?')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        };
 
         function loadData() {
             onValue(tasksRef, (snapshot) => {
@@ -457,7 +812,7 @@ onkeyup="renderTasks()">
                 renderTasks();
                 renderCalendar();
                 updateStats();
-                checkReminders(); // Check immediately when data loads
+                checkReminders();
             });
 
             onValue(habitsRef, (snapshot) => {
@@ -487,7 +842,7 @@ onkeyup="renderTasks()">
                 if (permission === "granted") {
                     document.getElementById('notif-banner').style.display = 'none';
                     new Notification("Super Planner", {
-                        body: "Notifikasi diaktifkan! Anda akan diingatkan saat waktu tugas tiba.",
+                        body: "Notifikasi diaktifkan! Anda akan seringkat saat waktu tugas tiba.",
                         icon: "https://cdn-icons-png.flaticon.com/512/2693/2693507.png"
                     });
                 }
@@ -497,6 +852,7 @@ onkeyup="renderTasks()">
         window.sendNotification = (title, body) => {
     let repeatCount = 0;
     let maxRepeat = 3;
+    
 
     const audio = document.getElementById('notif-sound');
 
@@ -511,8 +867,8 @@ onkeyup="renderTasks()">
         if (Notification.permission === "granted") {
             new Notification(title, {
                 body: body,
-                requireInteraction: true, // penting!
-                vibrate: [200, 100, 200] // getar (jika support)
+                requireInteraction: true,
+                vibrate: [200, 100, 200]
             });
         }
 
@@ -536,30 +892,201 @@ onkeyup="renderTasks()">
     playAlarm();
 };
 
+        // --- Advanced Reminder System ---
         window.checkReminders = () => {
             const now = new Date();
-            const currentDateTime = now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+            const currentTime = now.toTimeString().slice(0, 5); // HH:MM
             
             allTasks.forEach(task => {
-                if (task.completed || !task.time || !task.date) return;
+                if (task.completed) return;
                 
-                const taskDateTime = `${task.date}T${task.time}`;
-                
-                // Check if task time is within 5 minutes from now
-                const taskTime = new Date(taskDateTime);
-                const timeDiff = taskTime - now;
-                
-                // If time is between 0 and 5 minutes from now, and not yet notified
-                if (timeDiff >= -60000 && timeDiff <= 300000 && !notifiedTasks.has(task.id)) {
-                    sendNotification("⏰ Pengingat Tugas!", `${task.text}\nWaktu: ${task.time}`);
-                    notifiedTasks.add(task.id);
+                // Check reminders array
+                if (task.reminders && task.reminders.length > 0) {
+                    task.reminders.forEach((reminder, index) => {
+                        if (!reminder.time) return;
+                        
+                        const shouldNotify = checkReminderCondition(reminder, now, task);
+                        
+                        const reminderKey = `${task.id}-${index}-${now.toDateString()}`;
+                        
+                        if (shouldNotify && !notifiedTasks.has(reminderKey)) {
+                            sendNotification("⏰ Pengingat Tugas!", `${task.text}\nWaktu: ${reminder.time} (${getReminderLabel(reminder.type)})`);
+                            notifiedTasks.add(reminderKey);
+                            
+                            // Clean up old keys
+                            if (notifiedTasks.size > 1000) {
+                                const keysArray = Array.from(notifiedTasks);
+                                notifiedTasks = new Set(keysArray.slice(-500));
+                            }
+                        }
+                    });
                 }
                 
-                // Reset notification status if task date passed
-                if (timeDiff < 0) {
-                    notifiedTasks.delete(task.id);
+                // Legacy single reminder support
+                if (task.time && task.date) {
+                    const taskDateTime = `${task.date}T${task.time}`;
+                    const taskTime = new Date(taskDateTime);
+                    const timeDiff = taskTime - now;
+                    
+                    if (timeDiff >= -60000 && timeDiff <= 300000 && !notifiedTasks.has(task.id)) {
+                        sendNotification("⏰ Pengingat Tugas!", `${task.text}\nWaktu: ${task.time}`);
+                        notifiedTasks.add(task.id);
+                    }
+                    
+                    if (timeDiff < 0) {
+                        notifiedTasks.delete(task.id);
+                    }
                 }
             });
+        };
+
+        function checkReminderCondition(reminder, now, task) {
+            const reminderTime = reminder.time;
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            // Check if time matches
+            if (reminderTime !== currentTime) return false;
+            
+            const dayOfWeek = now.getDay(); // 0 = Sunday
+            const dateOfMonth = now.getDate();
+            
+            switch (reminder.type) {
+                case 'once':
+                    // Check if this reminder was already triggered today
+                    const today = now.toDateString();
+                    const lastTriggered = reminder.lastTriggered;
+                    return lastTriggered !== today;
+                    
+                case 'daily':
+                    return true;
+                    
+                case 'weekly':
+                    // Trigger on specific day of week
+                    return reminder.dayOfWeek === dayOfWeek;
+                    
+                case 'monthly':
+                    // Trigger on specific day of month
+                    return reminder.dayOfMonth === dateOfMonth;
+                    
+                case 'custom':
+                    // Custom interval
+                    if (reminder.untilDelete === false) {
+                        // Check if custom interval has passed
+                        const lastTrigger = reminder.lastTriggered ? new Date(reminder.lastTriggered) : null;
+                        if (!lastTrigger) return true;
+                        
+                        const diff = now - lastTrigger;
+                        const intervalMs = getCustomIntervalMs(reminder);
+                        return diff >= intervalMs;
+                    }
+                    return true;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        function getCustomIntervalMs(reminder) {
+            const value = reminder.value || 1;
+            const unit = reminder.unit || 'days';
+            
+            switch (unit) {
+                case 'hours': return value * 60 * 60 * 1000;
+                case 'days': return value * 24 * 60 * 60 * 1000;
+                case 'weeks': return value * 7 * 24 * 60 * 60 * 1000;
+                default: return value * 24 * 60 * 60 * 1000;
+            }
+        }
+
+        function getReminderLabel(type) {
+            switch (type) {
+                case 'once': return 'Sekali';
+                case 'daily': return 'Harian';
+                case 'weekly': return 'Mingguan';
+                case 'monthly': return 'Bulanan';
+                case 'custom': return 'Custom';
+                default: return type;
+            }
+        }
+
+        // --- Reminder UI Functions ---
+        function setupReminderOptions() {
+            const options = document.querySelectorAll('.reminder-option input');
+            options.forEach(option => {
+                option.addEventListener('change', (e) => {
+                    document.querySelectorAll('.reminder-option').forEach(o => o.classList.remove('active'));
+                    e.target.parentElement.classList.add('active');
+                    
+                    const customDiv = document.getElementById('custom-reminder-options');
+                    if (e.target.value === 'custom') {
+                        customDiv.classList.add('show');
+                    } else {
+                        customDiv.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Set default active
+            document.getElementById('reminder-once').classList.add('active');
+        }
+
+        window.addMultipleReminders = () => {
+            document.getElementById('reminder-modal').style.display = 'flex';
+        };
+
+        window.saveModalReminder = () => {
+            const type = document.getElementById('modal-reminder-type').value;
+            const time = document.getElementById('modal-reminder-time').value;
+            
+            if (!time) {
+                alert('Mohon pilih waktu pengingat');
+                return;
+            }
+            
+            const reminder = {
+                type: type,
+                time: time,
+                createdAt: Date.now()
+            };
+            
+            if (type === 'custom') {
+                reminder.value = parseInt(document.getElementById('modal-custom-value').value) || 1;
+                reminder.unit = document.getElementById('modal-custom-unit').value;
+                reminder.untilDelete = document.getElementById('modal-until-delete').checked;
+            } else if (type === 'weekly') {
+                reminder.dayOfWeek = new Date().getDay();
+            } else if (type === 'monthly') {
+                reminder.dayOfMonth = new Date().getDate();
+            }
+            
+            pendingReminders.push(reminder);
+            renderPendingReminders();
+            closeReminderModal();
+        };
+
+        window.closeReminderModal = () => {
+            document.getElementById('reminder-modal').style.display = 'none';
+        };
+
+        function renderPendingReminders() {
+            const container = document.getElementById('multi-reminder-list');
+            container.innerHTML = '';
+            
+            pendingReminders.forEach((reminder, index) => {
+                const el = document.createElement('div');
+                el.className = 'reminder-item';
+                el.innerHTML = `
+                    <span class="badge-reminder-type">${getReminderLabel(reminder.type)}</span>
+                    <span><i class="fas fa-clock"></i> ${reminder.time}</span>
+                    <i class="fas fa-times remove-reminder" onclick="removePendingReminder(${index})"></i>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        window.removePendingReminder = (index) => {
+            pendingReminders.splice(index, 1);
+            renderPendingReminders();
         };
 
         // --- Natural Language Processing (Lite) ---
@@ -606,28 +1133,60 @@ onkeyup="renderTasks()">
             const text = document.getElementById('task-input').value;
             if (!text) return alert('Isi tugas dulu!');
 
+            const reminderType = document.querySelector('input[name="reminder-type"]:checked').value;
+            const time = document.getElementById('task-time').value;
+            
+            // Build reminders array
+            let reminders = [];
+            
+            if (time) {
+                const primaryReminder = {
+                    type: reminderType,
+                    time: time,
+                    createdAt: Date.now()
+                };
+                
+                if (reminderType === 'custom') {
+                    primaryReminder.value = parseInt(document.getElementById('custom-repeat-value').value) || 1;
+                    primaryReminder.unit = document.getElementById('custom-repeat-type').value;
+                    primaryReminder.untilDelete = document.getElementById('custom-until-delete').checked;
+                } else if (reminderType === 'weekly') {
+                    primaryReminder.dayOfWeek = new Date().getDay();
+                } else if (reminderType === 'monthly') {
+                    primaryReminder.dayOfMonth = new Date().getDate();
+                }
+                
+                reminders.push(primaryReminder);
+            }
+            
+            // Add pending reminders from multi-reminder
+            reminders = [...reminders, ...pendingReminders];
+
             const newTask = {
                 text: text,
                 date: document.getElementById('task-date').value,
-                time: document.getElementById('task-time').value,
+                time: time || null,
                 priority: document.getElementById('task-priority').value,
                 category: document.getElementById('task-category').value,
                 tags: document.getElementById('task-tags').value,
                 completed: false,
                 pinned: false,
                 createdAt: Date.now(),
-                notified: false
+                notified: false,
+                reminders: reminders
             };
 
             push(tasksRef, newTask);
             
+            // Reset form
             document.getElementById('task-input').value = '';
             document.getElementById('task-tags').value = '';
+            pendingReminders = [];
+            renderPendingReminders();
         };
 
         window.toggleTask = (id, currentStatus) => {
             update(ref(db, `tasks/${id}`), { completed: !currentStatus });
-            // Reset notification status when task is toggled
             if (!currentStatus) notifiedTasks.delete(id);
         };
 
@@ -644,10 +1203,50 @@ onkeyup="renderTasks()">
 
         window.openEdit = (id) => {
             const task = allTasks.find(t => t.id === id);
+            currentEditTaskId = id;
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-title').value = task.text;
             document.getElementById('edit-priority').value = task.priority;
+            
+            // Render existing reminders
+            renderEditReminders(task.reminders || []);
+            
             document.getElementById('edit-modal').style.display = 'flex';
+        };
+
+        function renderEditReminders(reminders) {
+            const container = document.getElementById('edit-reminder-list');
+            container.innerHTML = '';
+            
+            if (reminders.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-sub); font-size: 0.85rem; padding: 10px;">Belum ada pengingat</div>';
+                return;
+            }
+            
+            reminders.forEach((reminder, index) => {
+                const el = document.createElement('div');
+                el.className = 'reminder-list-item';
+                el.innerHTML = `
+                    <div class="reminder-info">
+                        <div class="reminder-type">${getReminderLabel(reminder.type)}</div>
+                        <div class="reminder-time"><i class="fas fa-clock"></i> ${reminder.time}</div>
+                    </div>
+                    <button class="icon-btn delete" onclick="removeEditReminder(${index})"><i class="fas fa-trash"></i></button>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        window.removeEditReminder = (index) => {
+            const task = allTasks.find(t => t.id === currentEditTaskId);
+            const reminders = task.reminders || [];
+            reminders.splice(index, 1);
+            update(ref(db, `tasks/${currentEditTaskId}`), { reminders: reminders });
+            renderEditReminders(reminders);
+        };
+
+        window.addReminderToTask = () => {
+            document.getElementById('reminder-modal').style.display = 'flex';
         };
 
         window.saveEdit = () => {
@@ -663,7 +1262,16 @@ onkeyup="renderTasks()">
             const search = document.getElementById('search-input').value.toLowerCase();
             container.innerHTML = '';
 
-            const filtered = allTasks.filter(t => t.text.toLowerCase().includes(search));
+            let filtered = allTasks.filter(t => t.text.toLowerCase().includes(search));
+            
+            // Apply filter
+            if (currentFilter === 'active') {
+                filtered = filtered.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                filtered = filtered.filter(t => t.completed);
+            } else if (currentFilter === 'reminder') {
+                filtered = filtered.filter(t => t.reminders && t.reminders.length > 0);
+            }
 
             if (filtered.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-sub);">Tidak ada tugas ditemukan</div>';
@@ -676,11 +1284,14 @@ onkeyup="renderTasks()">
                 
                 // Check if reminder should show
                 let reminderBadge = '';
-                if (!task.completed && task.time && task.date) {
+                const hasReminders = task.reminders && task.reminders.length > 0;
+                if (!task.completed && hasReminders) {
+                    reminderBadge = `<span class="badge badge-reminder"><i class="fas fa-bell"></i> ${task.reminders.length} alarm</span>`;
+                } else if (!task.completed && task.time && task.date) {
                     const taskTime = new Date(`${task.date}T${task.time}`);
                     const now = new Date();
                     const diff = taskTime - now;
-                    if (diff > 0 && diff <= 3600000) { // Within 1 hour
+                    if (diff > 0 && diff <= 3600000) {
                         reminderBadge = `<span class="badge badge-reminder"><i class="fas fa-bell"></i> Segera</span>`;
                     }
                 }
@@ -714,6 +1325,13 @@ onkeyup="renderTasks()">
                 `;
                 container.appendChild(el);
             });
+        };
+
+        window.filterTasks = (filter) => {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTasks();
         };
 
         // --- Habit Logic ---
@@ -880,7 +1498,16 @@ onkeyup="renderTasks()">
             const d = new Date(dateStr);
             return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
         }
+        
+        // Handle modal reminder type change
+        document.getElementById('modal-reminder-type').addEventListener('change', (e) => {
+            const customOptions = document.getElementById('modal-custom-options');
+            if (e.target.value === 'custom') {
+                customOptions.style.display = 'block';
+            } else {
+                customOptions.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
-
