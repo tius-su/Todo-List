@@ -396,21 +396,116 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .calendar-weekday {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 4px 0;
         }
         .cal-day {
-            background: var(--surface);
-            padding: 10px 5px;
+            background: linear-gradient(140deg, #ffffff 0%, #fef6ff 45%, #eef7ff 100%);
+            padding: 10px 6px;
             border-radius: 8px;
             text-align: center;
             min-height: 60px;
-            border: 1px solid var(--border);
+            border: 1px solid #e3ecff;
             position: relative;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+        .cal-day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(148, 163, 184, 0.22);
+        }
+        .cal-day.has-tasks {
+            border-color: #a5b4fc;
+            box-shadow: inset 0 0 0 1px #c7d2fe;
+        }
+        .cal-day.selected {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 2px #bbf7d0;
         }
         .cal-day.today { border: 2px solid var(--primary); }
-        .cal-day .day-num { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; }
-        .cal-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; display: inline-block; margin: 1px; }
+        .cal-day .day-num { font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; display: block; color: #1f2937; }
+        .cal-day .day-dots { min-height: 10px; }
+        .cal-dot { width: 6px; height: 6px; background: #7c3aed; border-radius: 50%; display: inline-block; margin: 1px; }
+        .cal-task-count {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #7c3aed;
+            background: #ede9fe;
+            border: 1px solid #ddd6fe;
+            border-radius: 999px;
+            min-width: 18px;
+            height: 18px;
+            line-height: 16px;
+            padding: 0 4px;
+        }
+        .calendar-task-panel {
+            margin-top: 14px;
+            background: linear-gradient(135deg, #fff7ed 0%, #f0f9ff 60%, #fdf4ff 100%);
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .calendar-task-panel h4 {
+            margin-bottom: 10px;
+            color: #7c2d12;
+            font-size: 0.95rem;
+        }
+        .calendar-task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .calendar-task-item {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #fed7aa;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.85rem;
+            color: #1f2937;
+        }
+        .calendar-task-item small {
+            color: #6b7280;
+            display: block;
+            margin-top: 4px;
+        }
+        [data-theme="dark"] .cal-day {
+            background: linear-gradient(140deg, #1e293b 0%, #1f2937 55%, #0f172a 100%);
+            border-color: #334155;
+        }
+        [data-theme="dark"] .cal-day .day-num { color: #e2e8f0; }
+        [data-theme="dark"] .cal-day.has-tasks {
+            border-color: #6366f1;
+            box-shadow: inset 0 0 0 1px #4338ca;
+        }
+        [data-theme="dark"] .calendar-task-panel {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-color: #334155;
+        }
+        [data-theme="dark"] .calendar-task-panel h4 { color: #e2e8f0; }
+        [data-theme="dark"] .calendar-task-item {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        [data-theme="dark"] .calendar-task-item small { color: #cbd5e1; }
 
         /* --- Stats & Habits --- */
         .stat-card {
@@ -429,6 +524,23 @@
             border: 1px solid var(--border);
         }
         .habit-streak { color: var(--warning); font-weight: 600; }
+        .habit-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .habit-btn {
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+        .habit-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .habit-btn.reset:hover { border-color: #f59e0b; color: #b45309; }
+        .habit-btn.delete:hover { border-color: #ef4444; color: #b91c1c; }
 
         /* --- Analytics --- */
         .analytics-grid {
@@ -707,6 +819,40 @@
             border-radius: 8px;
             margin-bottom: 5px;
         }
+
+        .alarm-stop-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 12px 20px rgba(239, 68, 68, 0.25);
+        }
+        .alarm-header-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid { gap: 6px; }
+            .calendar-weekdays { gap: 6px; }
+            .cal-day { min-height: 58px; padding: 8px 4px; }
+            .cal-day .day-num { font-size: 0.82rem; }
+            .widget-container { grid-template-columns: 1fr; }
+            .habit-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .habit-actions { width: 100%; flex-wrap: wrap; }
+            .habit-actions .icon-btn { margin-left: auto; }
+            .alarm-stop-btn { right: 12px; left: 12px; justify-content: center; }
+        }
     </style>
 </head>
 <body>
@@ -716,6 +862,9 @@
         <span><i class="fas fa-bell"></i> Aktifkan notifikasi agar tidak lupa tugas!</span>
         <button onclick="requestNotificationPermission()">Aktifkan</button>
     </div>
+    <button id="stop-alarm-btn" class="alarm-stop-btn" onclick="stopActiveAlarm()">
+        <i class="fas fa-volume-mute"></i> Stop Alarm
+    </button>
 
     <header>
         <div class="brand">
@@ -727,6 +876,7 @@
                 <i class="fas fa-user-circle"></i> <span id="current-user">Guest</span>
             </span>
             <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button id="header-stop-alarm-btn" class="theme-toggle alarm-header-btn" onclick="stopActiveAlarm()" title="Stop Alarm" disabled><i class="fas fa-volume-xmark"></i></button>
             <button class="logout-btn" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
@@ -876,8 +1026,21 @@
                     <button class="icon-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
                 </div>
             </div>
+            <div class="calendar-weekdays">
+                <div class="calendar-weekday">Min</div>
+                <div class="calendar-weekday">Sen</div>
+                <div class="calendar-weekday">Sel</div>
+                <div class="calendar-weekday">Rab</div>
+                <div class="calendar-weekday">Kam</div>
+                <div class="calendar-weekday">Jum</div>
+                <div class="calendar-weekday">Sab</div>
+            </div>
             <div class="calendar-grid" id="calendar-grid">
                 <!-- Calendar injected here -->
+            </div>
+            <div class="calendar-task-panel">
+                <h4 id="calendar-task-title">Tugas pada tanggal terpilih</h4>
+                <div id="calendar-task-list" class="calendar-task-list"></div>
             </div>
         </div>
 
@@ -1161,6 +1324,9 @@
         let currentFilter = 'all';
         let pendingReminders = [];
         let currentEditTaskId = null;
+        let activeAlarmTimeouts = [];
+        let isAlarmActive = false;
+        let selectedCalendarDate = null;
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', () => {
@@ -1210,6 +1376,7 @@
                 allHabits = data ? Object.entries(data).map(([id, val]) => ({id, ...val})) : [];
                 renderHabits();
                 updateStats();
+                renderWidgets();
             });
         }
 
@@ -1240,42 +1407,65 @@
         };
 
         window.sendNotification = (title, body) => {
-    let repeatCount = 0;
-    let maxRepeat = 3;
-    
+            window.stopActiveAlarm();
+            let repeatCount = 0;
+            const maxRepeat = 3;
+            const audio = document.getElementById('notif-sound');
+            const stopBtn = document.getElementById('stop-alarm-btn');
+            const headerStopBtn = document.getElementById('header-stop-alarm-btn');
+            isAlarmActive = true;
+            stopBtn.style.display = 'flex';
+            if (headerStopBtn) headerStopBtn.disabled = false;
 
-    const audio = document.getElementById('notif-sound');
+            function playAlarm() {
+                if (!isAlarmActive) return;
 
-    function playAlarm() {
-        if (audio) {
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
-        }
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                }
 
-        if (Notification.permission === "granted") {
-            new Notification(title, {
-                body: body,
-                requireInteraction: true,
-                vibrate: [200, 100, 200]
-            });
-        }
+                if (Notification.permission === "granted") {
+                    new Notification(title, {
+                        body: body,
+                        requireInteraction: true,
+                        vibrate: [200, 100, 200]
+                    });
+                }
 
-        alert(`🔔 ${title}\n\n${body}`);
+                alert(`🔔 ${title}\n\n${body}`);
+                repeatCount++;
 
-        repeatCount++;
+                if (repeatCount < maxRepeat && isAlarmActive) {
+                    const timeoutId = setTimeout(playAlarm, 5000);
+                    activeAlarmTimeouts.push(timeoutId);
+                    return;
+                }
 
-        if (repeatCount < maxRepeat) {
-            setTimeout(playAlarm, 5000);
-        } else {
+                window.stopActiveAlarm();
+            }
+
+            playAlarm();
+        };
+
+        window.stopActiveAlarm = () => {
+            activeAlarmTimeouts.forEach(t => clearTimeout(t));
+            activeAlarmTimeouts = [];
+            isAlarmActive = false;
+            const audio = document.getElementById('notif-sound');
+            const stopBtn = document.getElementById('stop-alarm-btn');
+            const headerStopBtn = document.getElementById('header-stop-alarm-btn');
             if (audio) {
                 audio.pause();
                 audio.currentTime = 0;
             }
-        }
-    }
-
-    playAlarm();
-};
+            if (stopBtn) {
+                stopBtn.style.display = 'none';
+            }
+            if (headerStopBtn) {
+                headerStopBtn.disabled = true;
+            }
+        };
 
         // --- Advanced Reminder System ---
         window.checkReminders = () => {
@@ -1308,14 +1498,30 @@
                 if (task.time && task.date) {
                     const taskDateTime = `${task.date}T${task.time}`;
                     const taskTime = new Date(taskDateTime);
-                    const timeDiff = taskTime - now;
+                    const timeDiff = taskTime - now; // dalam milidetik
                     
-                    if (timeDiff >= -60000 && timeDiff <= 300000 && !notifiedTasks.has(task.id)) {
-                        sendNotification("⏰ Pengingat Tugas!", `${task.text}\nWaktu: ${task.time}`);
+                    // Alarm 5 menit SEBELUM (-300000ms), SESUAT (-60000ms), dan 5 menit SESUDAH (+300000ms)
+                    const fiveMinutes = 5 * 60 * 1000; // 300000ms
+                    
+                    // Cek jika dalam range 5 menit sebelum atau 5 menit setelah
+                    if (timeDiff >= -fiveMinutes && timeDiff <= fiveMinutes && !notifiedTasks.has(task.id)) {
+                        let message = "";
+                        if (timeDiff < -60000) {
+                            message = `⏰ Akan datang dalam ${Math.round(-timeDiff/60000)} menit!\n${task.text}`;
+                        } else if (timeDiff < 0) {
+                            message = `⏰ Mulai sekarang!\n${task.text}`;
+                        } else if (timeDiff < 60000) {
+                            message = `⏰ Sekarang juga!\n${task.text}`;
+                        } else {
+                            message = `⏰ Tinggal ${Math.round(timeDiff/60000)} menit!\n${task.text}`;
+                        }
+                        
+                        sendNotification("⏰ Pengingat!", message);
                         notifiedTasks.add(task.id);
                     }
                     
-                    if (timeDiff < 0) {
+                    // Reset setelah 5 menit berlalu
+                    if (timeDiff < -fiveMinutes) {
                         notifiedTasks.delete(task.id);
                     }
                 }
@@ -2082,6 +2288,16 @@
             update(ref(db, `habits/${id}`), { count: currentCount + 1, lastDone: today });
         };
 
+        window.resetHabit = (id) => {
+            if (!confirm('Reset progres habit ini ke 0?')) return;
+            update(ref(db, `habits/${id}`), { count: 0, lastDone: null });
+        };
+
+        window.deleteHabit = (id) => {
+            if (!confirm('Hapus habit ini? Progres tidak bisa dikembalikan.')) return;
+            remove(ref(db, `habits/${id}`));
+        };
+
         window.renderHabits = () => {
             const container = document.getElementById('habit-list-container');
             container.innerHTML = '';
@@ -2091,11 +2307,16 @@
                 el.innerHTML = `
                     <div>
                         <div style="font-weight:600;">${h.name}</div>
+                        <div class="habit-streak">Streak: ${h.count} hari</div>
                         <div style="font-size:0.8rem; color:var(--text-sub);">Total: ${h.count} kali</div>
                     </div>
-                    <button class="icon-btn" style="color:var(--success); font-size:1.5rem;" onclick="checkHabit('${h.id}', ${h.count})">
-                        <i class="fas fa-plus-circle"></i>
-                    </button>
+                    <div class="habit-actions">
+                        <button class="habit-btn reset" onclick="resetHabit('${h.id}')"><i class="fas fa-rotate-left"></i> Reset</button>
+                        <button class="habit-btn delete" onclick="deleteHabit('${h.id}')"><i class="fas fa-trash"></i> Hapus</button>
+                        <button class="icon-btn" style="color:var(--success); font-size:1.5rem;" onclick="checkHabit('${h.id}', ${h.count})" title="Tambah progres">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </div>
                 `;
                 container.appendChild(el);
             });
@@ -2126,23 +2347,72 @@
             }
 
             const todayStr = new Date().toDateString();
+            if (!selectedCalendarDate) {
+                selectedCalendarDate = getLocalDateKey(new Date());
+            }
             
             for(let d=1; d<=daysInMonth; d++) {
-                const dateStr = new Date(year, month, d).toISOString().split('T')[0];
+                const dateStr = getLocalDateKey(new Date(year, month, d));
                 const isToday = new Date(year, month, d).toDateString() === todayStr;
+                const isSelected = dateStr === selectedCalendarDate;
                 
-                const tasksCount = allTasks.filter(t => t.date === dateStr && !t.completed).length;
+                const tasksOnDate = allTasks.filter(t => t.date === dateStr);
+                const tasksCount = tasksOnDate.length;
                 let dots = '';
                 for(let k=0; k<Math.min(tasksCount, 4); k++) dots += `<span class="cal-dot"></span>`;
 
                 grid.innerHTML += `
-                    <div class="cal-day ${isToday ? 'today' : ''}">
+                    <div class="cal-day ${isToday ? 'today' : ''} ${tasksCount > 0 ? 'has-tasks' : ''} ${isSelected ? 'selected' : ''}" onclick="selectCalendarDate('${dateStr}')">
                         <span class="day-num">${d}</span>
-                        <div>${dots}</div>
+                        ${tasksCount > 0 ? `<span class="cal-task-count">${tasksCount}</span>` : ''}
+                        <div class="day-dots">${dots}</div>
                     </div>
                 `;
             }
+
+            renderCalendarTasks(selectedCalendarDate);
         };
+
+        window.selectCalendarDate = (dateStr) => {
+            selectedCalendarDate = dateStr;
+            renderCalendar();
+        };
+
+        function renderCalendarTasks(dateStr) {
+            const titleEl = document.getElementById('calendar-task-title');
+            const listEl = document.getElementById('calendar-task-list');
+            if (!titleEl || !listEl) return;
+            if (!dateStr) {
+                titleEl.textContent = 'Pilih tanggal untuk melihat tugas';
+                listEl.innerHTML = '<div class="calendar-task-item">Belum ada tanggal terpilih.</div>';
+                return;
+            }
+
+            const localDate = parseLocalDateKey(dateStr);
+            const safeDisplayDate = localDate.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            titleEl.textContent = `Tugas: ${safeDisplayDate}`;
+
+            const tasksOnDate = allTasks
+                .filter(t => t.date === dateStr)
+                .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+
+            if (tasksOnDate.length === 0) {
+                listEl.innerHTML = '<div class="calendar-task-item">Tidak ada tugas di tanggal ini.</div>';
+                return;
+            }
+
+            listEl.innerHTML = tasksOnDate.map(task => `
+                <div class="calendar-task-item">
+                    <strong>${task.text}</strong>
+                    <small>${task.time ? `Jam ${task.time}` : 'Tanpa jam'} • ${task.completed ? 'Selesai' : 'Belum selesai'} • ${task.category || 'Tanpa kategori'}</small>
+                </div>
+            `).join('');
+        }
 
         // --- Pomodoro Logic ---
         window.startPomodoro = () => {
@@ -2236,8 +2506,21 @@
 
         function formatDate(dateStr) {
             if(!dateStr) return '';
-            const d = new Date(dateStr);
+            const d = parseLocalDateKey(dateStr);
             return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        }
+
+        function getLocalDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function parseLocalDateKey(dateStr) {
+            if (!dateStr) return new Date();
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, (m || 1) - 1, d || 1);
         }
         
         // Handle modal reminder type change
