@@ -1550,19 +1550,20 @@
                 collaborators: []
             };
 
-            push(tasksRef, newTask);
-            
-            document.getElementById('task-input').value = '';
-            document.getElementById('task-tags').value = '';
-            pendingReminders = [];
-            renderPendingReminders();
-        };
-
-        window.toggleTask = (id, currentStatus) => {
-            update(ref(db, `tasks/${id}`), { completed: !currentStatus });
-            if (!currentStatus) notifiedTasks.delete(id);
-        };
-
+           // Ganti baris push(tasksRef, newTask); dengan ini:
+push(tasksRef, newTask)
+    .then(() => {
+        console.log("Data berhasil masuk ke Firebase!");
+        // Reset form hanya jika berhasil
+        document.getElementById('task-input').value = '';
+        document.getElementById('task-tags').value = '';
+        pendingReminders = [];
+        renderPendingReminders();
+    })
+    .catch((error) => {
+        console.error("Gagal simpan data:", error);
+        alert("Gagal simpan ke Firebase: " + error.message);
+    });
         window.pinTask = (id, currentPin) => {
             update(ref(db, `tasks/${id}`), { pinned: !currentPin });
         };
