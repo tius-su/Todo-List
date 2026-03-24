@@ -223,11 +223,11 @@
             <i class="fas fa-bolt"></i> Super Planner
         </div>
 
-        <!-- User ID/Password Login Form -->
+        <!-- Email/Password Login Form -->
         <form id="login-form" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label for="user-id"><i class="fas fa-user"></i> User ID</label>
-                <input type="text" id="user-id" name="user-id" placeholder="Masukkan User ID" autocomplete="username">
+                <input type="email" id="user-id" name="user-id" placeholder="Masukkan email yang terdaftar" autocomplete="username">
             </div>
 
             <div class="form-group">
@@ -256,6 +256,9 @@
         </button>
 
         <p class="error-message" id="error-message"></p>
+        <p style="margin-top: 12px; color: var(--text-sub); font-size: 0.85rem; text-align: center;">
+            Gunakan email yang sudah terdaftar di Firebase Auth atau masuk dengan Google.
+        </p>
     </div>
 
     <!-- Firebase Auth Scripts -->
@@ -280,113 +283,75 @@
 
         // Check if user is already logged in
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.location.href = 'index.html';
-            }
+            if (!user) return;
+
+            const displayName = user.displayName || user.email || user.uid;
+            localStorage.setItem('currentUser', displayName);
+            localStorage.setItem('currentUserUid', user.uid);
+            localStorage.setItem('currentUserEmail', user.email || '');
+            localStorage.setItem('currentUserType', user.providerData?.[0]?.providerId || 'firebase');
+            window.location.href = 'index.html';
         });
 
         // Handle User ID/Password Login
         window.handleLogin = async (event) => {
             event.preventDefault();
             
-            const userId = document.getElementById('user-id').value;
+            const email = document.getElementById('user-id').value.trim();
             const password = document.getElementById('password').value;
             const rememberMe = document.getElementById('remember-me').checked;
             const errorMsg = document.getElementById('error-message');
+            errorMsg.style.display = 'none';
 
-            if (!userId || !password) {
-                errorMsg.textContent = 'Mohon isi User ID dan Password';
+            if (!email || !password) {
+                errorMsg.textContent = 'Mohon isi email dan password';
                 errorMsg.style.display = 'block';
                 return;
             }
 
-            // Create email from userID (for Firebase auth)
-            const email = `${userId}@superplanner.local`;
-            
             try {
-                // Try to sign in with the constructed email
-                await signInWithEmailAndPassword(auth, email, password);
-                
-                // Save remember me preference
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                const user = result.user;
+                localStorage.setItem('currentUser', user.displayName || user.email || user.uid);
+                localStorage.setItem('currentUserUid', user.uid);
+                localStorage.setItem('currentUserEmail', user.email || '');
+                localStorage.setItem('currentUserType', 'password');
+
                 if (rememberMe) {
-                    localStorage.setItem('rememberUserId', userId);
+                    localStorage.setItem('rememberUserId', email);
                 } else {
                     localStorage.removeItem('rememberUserId');
                 }
-                
+
                 window.location.href = 'index.html';
             } catch (error) {
-                // If user doesn't exist, create a new account automatically (auto pill)
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-                    try {
-                        // Auto-create user by attempting to sign in with a different method
-                        // Since we don't have registration, we'll use a simple local storage approach
-                        handleLocalLogin(userId, password, rememberMe);
-                    } catch (localError) {
-                        errorMsg.textContent = 'User ID atau Password salah';
-                        errorMsg.style.display = 'block';
-                    }
-                } else if (error.code === 'auth/wrong-password') {
-                    errorMsg.textContent = 'Password salah';
-                    errorMsg.style.display = 'block';
+                console.error('Email login error:', error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorMsg.textContent = 'Email atau password salah.';
+                } else if (error.code === 'auth/user-not-found') {
+                    errorMsg.textContent = 'Email belum terdaftar di Firebase Auth.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMsg.textContent = 'Format email tidak valid.';
                 } else {
-                    // Fallback to local storage login
-                    handleLocalLogin(userId, password, rememberMe);
+                    errorMsg.textContent = 'Login gagal: ' + (error.message || error.code);
                 }
+                errorMsg.style.display = 'block';
             }
         };
 
-        // Local storage based login (for user id/password without Firebase registration)
-        function handleLocalLogin(userId, password, rememberMe) {
-            const storedUsers = JSON.parse(localStorage.getItem('superPlannerUsers') || '{}');
-            
-            if (storedUsers[userId]) {
-                // Verify password
-                if (storedUsers[userId].password === password) {
-                    // Login successful
-                    localStorage.setItem('currentUser', userId);
-                    if (rememberMe) {
-                        localStorage.setItem('rememberUserId', userId);
-                    } else {
-                        localStorage.removeItem('rememberUserId');
-                    }
-                    window.location.href = 'index.html';
-                    return;
-                } else {
-                    document.getElementById('error-message').textContent = 'Password salah';
-                    document.getElementById('error-message').style.display = 'block';
-                    return;
-                }
-            }
-            
-            // Auto-create user (auto pill feature)
-            storedUsers[userId] = {
-                password: password,
-                createdAt: Date.now()
-            };
-            localStorage.setItem('superPlannerUsers', JSON.stringify(storedUsers));
-            
-            // Login
-            localStorage.setItem('currentUser', userId);
-            if (rememberMe) {
-                localStorage.setItem('rememberUserId', userId);
-            }
-            
-            window.location.href = 'index.html';
-        }
-
-        // Google Login
         document.getElementById('google-login-btn').addEventListener('click', () => {
             signInWithPopup(auth, provider)
                 .then((result) => {
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
-                    const token = credential.accessToken;
                     const user = result.user;
+                    const displayName = user.displayName || user.email || user.uid;
+                    localStorage.setItem('currentUser', displayName);
+                    localStorage.setItem('currentUserUid', user.uid);
+                    localStorage.setItem('currentUserEmail', user.email || '');
+                    localStorage.setItem('currentUserType', 'google');
+                    window.location.href = 'index.html';
                 }).catch((error) => {
                     const errorCode = error.code;
                     const errorMessage = error.message;
-                    const email = error.customData?.email;
-                    const credential = GoogleAuthProvider.credentialFromError(error);
                     
                     console.error("Google Sign-In Error:", errorMessage);
                     
