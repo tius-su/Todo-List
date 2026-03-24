@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Planner Pro + Notifikasi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Super Planner">
+    <link rel="apple-touch-icon" href="logo.png">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Notification Permission Banner -->
+    <div id="notif-banner" class="notif-banner">
+        <span><i class="fas fa-bell"></i> Aktifkan notifikasi agar tidak lupa tugas!</span>
+        <button onclick="requestNotificationPermission()">Aktifkan</button>
+    </div>
+    <button id="stop-alarm-btn" class="alarm-stop-btn" onclick="stopActiveAlarm()">
+        <i class="fas fa-volume-mute"></i> Stop Alarm
+    </button>
+
+    <header>
+        <div class="brand">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+            <i class="fas fa-bolt"></i> Super Planner
+        </div>
+        <div class="header-actions">
+            <span class="user-info" id="user-display">
+                <i class="fas fa-user-circle"></i> <span id="current-user">Guest</span>
+            </span>
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button id="header-stop-alarm-btn" class="theme-toggle alarm-header-btn" onclick="stopActiveAlarm()" title="Stop Alarm" disabled><i class="fas fa-volume-xmark"></i></button>
+            <button class="logout-btn" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('tasks', this)">Tugas</button>
+        <button class="nav-btn" onclick="switchTab('routine', this)">Rutin</button>
+        <button class="nav-btn" onclick="switchTab('calendar', this)">Kalender</button>
+        <button class="nav-btn" onclick="switchTab('habits', this)">Habit</button>
+        <button class="nav-btn" onclick="switchTab('analytics', this)">Analytics</button>
+        <button class="nav-btn" onclick="switchTab('backup', this)">Backup</button>
+        <button class="nav-btn" onclick="switchTab('stats', this)">Statistik</button>
+    </nav>
+
+    <main>
+        <!-- TASKS VIEW -->
+        <div id="view-tasks" class="view-section active">
+            <div class="smart-input-container">
+                <input type="text" id="task-input" placeholder="Ketik tugas (cth: 'Rapat besok jam 10 prioritas tinggi')..." oninput="parseNaturalLanguage()">
+                <div class="input-row">
+                    <select id="task-priority">
+                        <option value="low">Prioritas Rendah</option>
+                        <option value="med">Prioritas Sedang</option>
+                        <option value="high">Prioritas Tinggi</option>
+                    </select>
+                    <select id="task-category">
+                        <option value="Personal">Personal</option>
+                        <option value="Work">Kerja</option>
+                        <option value="School">Sekolah</option>
+                        <option value="Health">Kesehatan</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <input type="date" id="task-date">
+                    <input type="time" id="task-time">
+                </div>
+
+                <div class="task-mode-box">
+                    <label class="task-mode-toggle">
+                        <input type="checkbox" id="task-is-routine" onchange="toggleRoutineOptions()">
+                        <span><i class="fas fa-repeat"></i> Buat sebagai tugas rutin</span>
+                    </label>
+                    <div id="routine-options" class="routine-options hidden">
+                        <select id="task-routine-type">
+                            <option value="daily">Harian</option>
+                            <option value="weekly">Mingguan</option>
+                            <option value="monthly">Bulanan</option>
+                        </select>
+                        <small>Tugas akan muncul kembali otomatis sesuai jadwal yang dipilih.</small>
+                    </div>
+                </div>
+                
+                <!-- Reminder Section -->
+                <div class="reminder-section">
+                    <div class="reminder-title">
+                        <i class="fas fa-bell"></i> Pengingat
+                    </div>
+                    <div class="reminder-options">
+                        <label class="reminder-option" id="reminder-once">
+                            <input type="radio" name="reminder-type" value="once" checked>
+                            <i class="fas fa-bell"></i> Sekali
+                        </label>
+                        <label class="reminder-option" id="reminder-daily">
+                            <input type="radio" name="reminder-type" value="daily">
+                            <i class="fas fa-redo"></i> Harian
+                        </label>
+                        <label class="reminder-option" id="reminder-weekly">
+                            <input type="radio" name="reminder-type" value="weekly">
+                            <i class="fas fa-calendar-week"></i> Mingguan
+                        </label>
+                        <label class="reminder-option" id="reminder-monthly">
+                            <input type="radio" name="reminder-type" value="monthly">
+                            <i class="fas fa-calendar-alt"></i> Bulanan
+                        </label>
+                        <label class="reminder-option" id="reminder-custom">
+                            <input type="radio" name="reminder-type" value="custom">
+                            <i class="fas fa-cog"></i> Custom
+                        </label>
+                    </div>
+                    
+                    <!-- Custom Reminder Options -->
+                    <div class="custom-reminder" id="custom-reminder-options">
+                        <select id="custom-repeat-type">
+                            <option value="hours">Jam</option>
+                            <option value="days">Hari</option>
+                            <option value="weeks">Minggu</option>
+                        </select>
+                        <input type="number" id="custom-repeat-value" placeholder="Jumlah" min="1" value="1" style="width: 70px;">
+                        <span style="align-self: center; font-size: 0.85rem; color: var(--text-sub);">sekali</span>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.85rem;">
+                            <input type="checkbox" id="custom-until-delete" checked>
+                            Sampai dihapus
+                        </label>
+                    </div>
+                    
+                    <!-- Multi Reminder List -->
+                    <div class="multi-reminder-list" id="multi-reminder-list">
+                        <!-- Dynamic reminders will be added here -->
+                    </div>
+                    <button type="button" class="btn-add" style="background: var(--warning); margin-top: 10px; font-size: 0.85rem; padding: 8px;" onclick="addMultipleReminders()">
+                        <i class="fas fa-plus"></i> Tambah Pengingat Lainnya
+                    </button>
+                </div>
+                
+                <input type="text" id="task-tags" placeholder="Tag (cth: #urgent)" style="width: 100%; padding: 12px; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text-main);">
+                <button class="btn-add" onclick="addTask()"><i class="fas fa-plus"></i> Tambah Tugas</button>
+            </div>
+
+            <div class="flex-between" style="margin-bottom: 15px;">
+                <h3>Daftar Tugas</h3>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="search-input" placeholder="Cari..." style="padding: 7px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main);" width="200px" font-size="1rem;" onkeyup="renderTasks()">
+                    <button class="icon-btn" onclick="startPomodoro()"><i class="fas fa-stopwatch"></i></button>
+                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterTasks('all', this)">Semua</button>
+                <button class="filter-btn" onclick="filterTasks('active', this)">Aktif</button>
+                <button class="filter-btn" onclick="filterTasks('completed', this)">Selesai</button>
+                <button class="filter-btn" onclick="filterTasks('reminder', this)">Dengan Pengingat</button>
+            </div>
+
+            <div id="task-list-container">
+                <!-- Tasks injected here -->
+            </div>
+        </div>
+
+        <!-- ROUTINE VIEW -->
+        <div id="view-routine" class="view-section">
+            <div class="smart-input-container">
+                <div class="flex-between" style="margin-bottom: 12px;">
+                    <h3>Tugas Rutin</h3>
+                    <span id="routine-summary" class="routine-summary">0 aktif • 0 selesai hari ini</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-sub); margin-bottom: 14px;">
+                    Tugas rutin akan tetap tersimpan. Jika ditandai selesai, statusnya hanya berlaku untuk jadwal hari ini lalu aktif lagi pada jadwal berikutnya.
+                </p>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterRoutineTasks('daily', this)">Harian</button>
+                    <button class="filter-btn" onclick="filterRoutineTasks('weekly', this)">Mingguan</button>
+                    <button class="filter-btn" onclick="filterRoutineTasks('monthly', this)">Bulanan</button>
+                </div>
+            </div>
+
+            <div id="routine-list-container"></div>
+
+            <div class="routine-completed-section">
+                <h4>Tugas Rutin Selesai Hari Ini</h4>
+                <div id="routine-completed-container"></div>
+            </div>
+        </div>
+
+        <!-- CALENDAR VIEW -->
+        <div id="view-calendar" class="view-section">
+            <!-- Widget Section -->
+            <div class="widget-container">
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title"><i class="fas fa-clock"></i> Hari Ini</div>
+                    </div>
+                    <div class="widget-content" id="widget-today">0 tugas</div>
+                </div>
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title"><i class="fas fa-exclamation-triangle"></i> Terlambat</div>
+                    </div>
+                    <div class="widget-content" id="widget-overdue">0 tugas</div>
+                </div>
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title"><i class="fas fa-fire"></i> Streak</div>
+                    </div>
+                    <div class="widget-content" id="widget-streak">0 hari</div>
+                </div>
+                <div class="widget">
+                    <div class="widget-header">
+                        <div class="widget-title"><i fa-star></i> Minggu Ini</div>
+                    </div>
+                    <div class="widget-content" id="widget-week">0 selesai</div>
+                </div>
+            </div>
+            
+            <div class="flex-between" style="margin-bottom: 10px;">
+                <h3 id="cal-month-year">Bulan Ini</h3>
+                <div>
+                    <button class="icon-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <button class="icon-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                <div class="calendar-weekday">Min</div>
+                <div class="calendar-weekday">Sen</div>
+                <div class="calendar-weekday">Sel</div>
+                <div class="calendar-weekday">Rab</div>
+                <div class="calendar-weekday">Kam</div>
+                <div class="calendar-weekday">Jum</div>
+                <div class="calendar-weekday">Sab</div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Calendar injected here -->
+            </div>
+            <div class="calendar-task-panel">
+                <h4 id="calendar-task-title">Tugas pada tanggal terpilih</h4>
+                <div id="calendar-task-list" class="calendar-task-list"></div>
+            </div>
+        </div>
+
+        <!-- HABITS VIEW -->
+        <div id="view-habits" class="view-section">
+            <div class="smart-input-container">
+                <input type="text" id="habit-input" placeholder="Nama kebiasaan (cth: Minum 2L air)">
+                <button class="btn-add" onclick="addHabit()">Buat Habit</button>
+            </div>
+            <div id="habit-list-container"></div>
+        </div>
+
+        <!-- ANALYTICS VIEW -->
+        <div id="view-analytics" class="view-section">
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h4>Total Tugas</h4>
+                    <div class="value" id="analytics-total">0</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Selesai</h4>
+                    <div class="value" id="analytics-completed">0</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Dalam Proses</h4>
+                    <div class="value" id="analytics-pending">0</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Tingkat Selesai</h4>
+                    <div class="value" id="analytics-rate">0%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Tugas per Kategori</div>
+                <div class="bar-chart" id="category-chart">
+                    <!-- Chart will be rendered here -->
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Tugas per Prioritas</div>
+                <div class="bar-chart" id="priority-chart">
+                    <!-- Chart will be rendered here -->
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Produktivitas 7 Hari Terakhir</div>
+                <div class="bar-chart" id="productivity-chart">
+                    <!-- Chart will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- BACKUP VIEW -->
+        <div id="view-backup" class="view-section">
+            <h3 style="margin-bottom: 15px;"><i class="fas fa-database"></i> Backup & Restore</h3>
+            
+            <div class="backup-section">
+                <button class="backup-btn" onclick="exportJSON()">
+                    <i class="fas fa-file-code"></i> Export JSON
+                </button>
+                <button class="backup-btn" onclick="exportCSV()">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+                <button class="backup-btn" onclick="document.getElementById('import-file').click()">
+                    <i class="fas fa-file-import"></i> Import Data
+                </button>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importJSON(event)">
+            </div>
+            
+            <div class="backup-section">
+                <button class="backup-btn" onclick="backupToFirebase()">
+                    <i class="fas fa-cloud-upload-alt"></i> Sync ke Cloud
+                </button>
+                <button class="backup-btn" onclick="restoreFromFirebase()">
+                    <i class="fas fa-cloud-download-alt"></i> Restore dari Cloud
+                </button>
+            </div>
+            
+            <div class="backup-section">
+                <button class="backup-btn" onclick="clearAllData()" style="border-color: var(--danger); color: var(--danger);">
+                    <i class="fas fa-trash"></i> Hapus Semua Data
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border);">
+                <h4><i class="fas fa-info-circle"></i> Informasi Backup</h4>
+                <p style="font-size: 0.85rem; color: var(--text-sub); margin-top: 10px;">
+                    - <strong>Export JSON:</strong> Backup lengkap semua data dalam format JSON<br>
+                    - <strong>Export CSV:</strong> Backup data tugas dalam format spreadsheet<br>
+                    - <strong>Import:</strong> Restore data dari file JSON<br>
+                    - <strong>Sync Cloud:</strong> Simpan data ke Firebase (membutuhkan login)<br>
+                    - <strong>Restore:</strong> Ambil data dari Firebase
+                </p>
+            </div>
+            
+            <!-- Collaboration Section -->
+            <h3 style="margin: 30px 0 15px;"><i class="fas fa-users"></i> Kolaborasi</h3>
+            
+            <div class="backup-section">
+                <button class="backup-btn" onclick="openCollabModal()">
+                    <i class="fas fa-user-plus"></i> Undang Kolaborator
+                </button>
+                <button class="backup-btn" onclick="generateShareLink()">
+                    <i class="fas fa-link"></i> Buat Link Berbagi
+                </button>
+            </div>
+            
+            <div id="collab-list" style="margin-top: 15px;">
+                <!-- Collaborator list will be shown here -->
+            </div>
+        </div>
+
+        <!-- STATS VIEW -->
+        <div id="view-stats" class="view-section">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">0</div>
+                <div>Total Tugas Selesai</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-streak">0</div>
+                <div>Habit Streak Terpanjang</div>
+            </div>
+            <button class="btn-add" style="background: #25D366;" onclick="shareProgress()"><i class="fab fa-whatsapp"></i> Share Progress WA</button>
+        </div>
+    </main>
+
+    <!-- Pomodoro Modal -->
+    <div id="pomodoro-modal" class="modal">
+        <div class="modal-content">
+            <h2>Focus Mode</h2>
+            <div class="timer-display" id="timer">25:00</div>
+            <div class="timer-controls">
+                <button class="btn-start" onclick="toggleTimer()" id="timer-btn">Mulai</button>
+                <button class="btn-reset" onclick="resetTimer()">Reset</button>
+                <button class="btn-reset" onclick="closePomodoro()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content reminder-modal-content" style="text-align: left;">
+            <h3>Edit Tugas</h3>
+            <input type="hidden" id="edit-id">
+            <label>Judul</label>
+            <input type="text" id="edit-title" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--text-main);">
+            <label>Prioritas</label>
+            <select id="edit-priority" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+                <option value="low">Low</option>
+                <option value="med">Medium</option>
+                <option value="high">High</option>
+            </select>
+            
+            <!-- Sub-tasks Section in Edit -->
+            <div style="margin-top: 15px; padding: 10px; background: var(--bg); border-radius: 8px;">
+                <label style="font-weight: 600;"><i class="fas fa-tasks"></i> Sub-tugas</label>
+                <div id="edit-subtask-list" style="margin: 10px 0;"></div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="new-subtask" placeholder="Tambah sub-tugas..." style="flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text-main);">
+                    <button class="btn-add" style="width: auto; padding: 8px 15px;" onclick="addSubtask()">+</button>
+                </div>
+            </div>
+            
+            <!-- Edit Reminder Section -->
+            <div style="margin-top: 15px; padding: 10px; background: var(--bg); border-radius: 8px;">
+                <label style="font-weight: 600;"><i class="fas fa-bell"></i> Pengingat</label>
+                <div id="edit-reminder-list" class="reminder-list"></div>
+                <button type="button" class="btn-add" style="font-size: 0.8rem; padding: 8px;" onclick="addReminderToTask()">
+                    <i class="fas fa-plus"></i> Tambah Pengingat
+                </button>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn-add" onclick="saveEdit()">Simpan</button>
+                <button class="btn-reset" onclick="document.getElementById('edit-modal').style.display='none'">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi Reminder Modal -->
+    <div id="reminder-modal" class="modal">
+        <div class="modal-content reminder-modal-content">
+            <h3><i class="fas fa-bell"></i> Tambah Pengingat</h3>
+            
+            <div class="form-group">
+                <label>Jenis Pengingat</label>
+                <select id="modal-reminder-type" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+                    <option value="once">Sekali</option>
+                    <option value="daily">Harian</option>
+                    <option value="weekly">Mingguan</option>
+                    <option value="monthly">Bulanan</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="modal-custom-options" style="display: none;">
+                <label>Custom Interval</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="modal-custom-value" placeholder="Jumlah" min="1" value="1" style="flex: 1; padding: 10px;">
+                    <select id="modal-custom-unit" style="flex: 1; padding: 10px;">
+                        <option value="hours">Jam</option>
+                        <option value="days">Hari</option>
+                        <option value="weeks">Minggu</option>
+                    </select>
+                </div>
+                <label style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="modal-until-delete" checked>
+                    <span>Berulang sampai dihapus</span>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>Waktu</label>
+                <input type="time" id="modal-reminder-time" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-add" onclick="saveModalReminder()">Tambah</button>
+                <button class="btn-reset" onclick="closeReminderModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collaboration Modal -->
+    <div id="collab-modal" class="modal">
+        <div class="modal-content reminder-modal-content">
+            <h3><i class="fas fa-user-plus"></i> Undang Kolaborator</h3>
+            
+            <div class="form-group">
+                <label>Email Kolaborator</label>
+                <input type="email" id="collab-email" placeholder="email@example.com" style="width: 100%; padding: 10px; margin: 5px 0; background: var(--bg); color: var(--text-main);">
+            </div>
+            
+            <p style="font-size: 0.85rem; color: var(--text-sub); margin: 10px 0;">
+                Kolaborator akan dapat melihat dan mengedit tugas Anda.
+            </p>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-add" onclick="inviteCollaborator()">Undang</button>
+                <button class="btn-reset" onclick="closeCollabModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio for Notification -->
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" loop></audio>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
