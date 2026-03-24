@@ -1,7 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove, update, set, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyAn7gIui9U5Yt6dDjJAX-gIUxQCkzkwz-o",
   authDomain: "hutang-notes.firebaseapp.com",
@@ -13,10 +9,23 @@ const firebaseConfig = {
 };
 
 const WEB_PUSH_PUBLIC_KEY = "BGk-P9mFil_YW7XIj5QZSiEsZ0_DqgIFrAFnYqQ8eXIKKRDb50LD9VEmM1TjsUyIVvcK2zR6YzS5y8tBHWkPfzM";
+const ALARM_SOUND_OPTIONS = {
+    alarm_tone: "alarm_tone.wav",
+    alarm_soft: "alarm_soft.wav",
+    alarm_classic: "alarm_classic.wav"
+};
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database(app);
+const auth = firebase.auth(app);
+const ref = (database, path) => database.ref(path);
+const push = (reference, value) => reference.push(value);
+const onValue = (reference, callback) => reference.on("value", (snapshot) => callback(snapshot));
+const remove = (reference) => reference.remove();
+const update = (reference, value) => reference.update(value);
+const set = (reference, value) => reference.set(value);
+const get = (reference) => reference.get();
+const signOut = (authInstance) => authInstance.signOut();
 
 let tasksRef;
 let habitsRef;
@@ -44,6 +53,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setupUserRefs();
     loadData();
     setupDateInputs();
+    initializeAlarmSettings();
     checkTheme();
     checkNotificationPermission();
     setupReminderOptions();
@@ -102,6 +112,7 @@ function loadData() {
         updateAnalytics();
         renderWidgets();
         checkReminders();
+        syncAndroidNativeAlarms();
     });
 
     onValue(habitsRef, (snapshot) => {
@@ -126,6 +137,7 @@ function normalizeTask(task) {
     const recurrence = task.recurrence || inferRecurrenceFromReminders(reminders);
     const startDate = task.date || getLocalDateKey(new Date(task.createdAt || Date.now()));
     const baseDate = parseLocalDateKey(startDate);
+    const recurringMeta = task.recurringMeta || {};
 
     return {
         ...task,
@@ -138,8 +150,8 @@ function normalizeTask(task) {
         collaborators: Array.isArray(task.collaborators) ? task.collaborators : [],
         completedOccurrences: Array.isArray(task.completedOccurrences) ? task.completedOccurrences : [],
         recurringMeta: {
-            dayOfWeek: typeof task.recurringMeta?.dayOfWeek === "number" ? task.recurringMeta.dayOfWeek : baseDate.getDay(),
-            dateOfMonth: typeof task.recurringMeta?.dateOfMonth === "number" ? task.recurringMeta.dateOfMonth : baseDate.getDate()
+            dayOfWeek: typeof recurringMeta.dayOfWeek === "number" ? recurringMeta.dayOfWeek : baseDate.getDay(),
+            dateOfMonth: typeof recurringMeta.dateOfMonth === "number" ? recurringMeta.dateOfMonth : baseDate.getDate()
         }
     };
 }
@@ -194,6 +206,68 @@ function getTodayRecurringTasks() {
     return allTasks.filter((task) => isRecurringTask(task) && taskOccursOnDate(task, todayKey));
 }
 
+function hasAndroidAlarmBridge() {
+    return typeof window !== "undefined" &&
+        window.AndroidAlarm &&
+        typeof window.AndroidAlarm.syncTasks === "function";
+}
+
+function getNextAlarmOccurrence(task, fromDate = new Date()) {
+    if (!task || !task.time) return null;
+
+    const now = new Date(fromDate);
+    const searchLimit = isRecurringTask(task) ? 400 : 2;
+
+    for (let offset = 0; offset < searchLimit; offset += 1) {
+        const candidate = new Date(now);
+        candidate.setDate(now.getDate() + offset);
+        const dateKey = getLocalDateKey(candidate);
+
+        if (!taskOccursOnDate(task, dateKey)) continue;
+        if (isTaskCompletedForDate(task, dateKey)) continue;
+
+        const [hour, minute] = task.time.split(":").map(Number);
+        const triggerDate = parseLocalDateKey(dateKey);
+        triggerDate.setHours(hour || 0, minute || 0, 0, 0);
+
+        if (triggerDate.getTime() <= now.getTime()) continue;
+
+        return {
+            triggerTime: triggerDate.getTime(),
+            dateKey
+        };
+    }
+
+    return null;
+}
+
+function syncAndroidNativeAlarms() {
+    if (!hasAndroidAlarmBridge()) return;
+
+    const payload = allTasks
+        .map((task) => {
+            const nextAlarm = getNextAlarmOccurrence(task);
+            if (!nextAlarm) return null;
+
+            return {
+                taskId: task.id,
+                title: task.text,
+                taskTime: task.time || "",
+                triggerTime: nextAlarm.triggerTime,
+                recurrence: isRecurringTask(task) ? task.recurrence : "none",
+                dayOfWeek: task.recurringMeta && typeof task.recurringMeta.dayOfWeek === "number" ? task.recurringMeta.dayOfWeek : -1,
+                dateOfMonth: task.recurringMeta && typeof task.recurringMeta.dateOfMonth === "number" ? task.recurringMeta.dateOfMonth : -1
+            };
+        })
+        .filter(Boolean);
+
+    try {
+        window.AndroidAlarm.syncTasks(JSON.stringify(payload));
+    } catch (error) {
+        console.error("Android alarm sync gagal:", error);
+    }
+}
+
 function getCompletionDateLabel(dateKey) {
     if (!dateKey) return "";
     return parseLocalDateKey(dateKey).toLocaleDateString("id-ID", {
@@ -207,6 +281,13 @@ window.logout = () => {
     if (!confirm("Logout dari aplikasi?")) return;
 
     const finishLogout = () => {
+        if (hasAndroidAlarmBridge()) {
+            try {
+                window.AndroidAlarm.syncTasks("[]");
+            } catch (error) {
+                console.error("Gagal membersihkan alarm Android:", error);
+            }
+        }
         localStorage.removeItem("currentUser");
         localStorage.removeItem("currentUserUid");
         localStorage.removeItem("currentUserEmail");
@@ -257,11 +338,9 @@ window.sendNotification = (title, body) => {
     const maxRepeat = 3;
     const audio = document.getElementById("notif-sound");
     const stopBtn = document.getElementById("stop-alarm-btn");
-    const headerStopBtn = document.getElementById("header-stop-alarm-btn");
     isAlarmActive = true;
 
     if (stopBtn) stopBtn.style.display = "flex";
-    if (headerStopBtn) headerStopBtn.disabled = false;
 
     function playAlarm() {
         if (!isAlarmActive) return;
@@ -301,14 +380,88 @@ window.stopActiveAlarm = () => {
 
     const audio = document.getElementById("notif-sound");
     const stopBtn = document.getElementById("stop-alarm-btn");
-    const headerStopBtn = document.getElementById("header-stop-alarm-btn");
 
     if (audio) {
         audio.pause();
         audio.currentTime = 0;
     }
     if (stopBtn) stopBtn.style.display = "none";
-    if (headerStopBtn) headerStopBtn.disabled = true;
+};
+
+function getSavedAlarmSound() {
+    const saved = localStorage.getItem("selectedAlarmSound");
+    return ALARM_SOUND_OPTIONS[saved] ? saved : "alarm_tone";
+}
+
+function getAlarmSoundPath(soundKey) {
+    return ALARM_SOUND_OPTIONS[soundKey] || ALARM_SOUND_OPTIONS.alarm_tone;
+}
+
+function applyAlarmSoundPreference(soundKey) {
+    const audio = document.getElementById("notif-sound");
+    const select = document.getElementById("alarm-sound-select");
+    const resolvedKey = ALARM_SOUND_OPTIONS[soundKey] ? soundKey : getSavedAlarmSound();
+
+    if (audio) {
+        audio.src = getAlarmSoundPath(resolvedKey);
+        audio.load();
+    }
+
+    if (select) {
+        select.value = resolvedKey;
+    }
+}
+
+function syncAlarmSoundPreferenceToAndroid(soundKey) {
+    if (!window.AndroidAlarm || typeof window.AndroidAlarm.setAlarmSound !== "function") return;
+    try {
+        window.AndroidAlarm.setAlarmSound(soundKey);
+    } catch (error) {
+        console.log("Gagal sync suara alarm ke Android:", error);
+    }
+}
+
+function initializeAlarmSettings() {
+    const soundKey = getSavedAlarmSound();
+    applyAlarmSoundPreference(soundKey);
+    syncAlarmSoundPreferenceToAndroid(soundKey);
+}
+
+window.saveAlarmSoundPreference = (soundKey) => {
+    const resolvedKey = ALARM_SOUND_OPTIONS[soundKey] ? soundKey : "alarm_tone";
+    localStorage.setItem("selectedAlarmSound", resolvedKey);
+    applyAlarmSoundPreference(resolvedKey);
+    syncAlarmSoundPreferenceToAndroid(resolvedKey);
+};
+
+window.previewAlarmSound = () => {
+    const audio = document.getElementById("notif-sound");
+    if (!audio) return;
+
+    window.stopActiveAlarm();
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    const timeoutId = setTimeout(() => window.stopActiveAlarm(), 6000);
+    activeAlarmTimeouts.push(timeoutId);
+    isAlarmActive = true;
+    const stopBtn = document.getElementById("stop-alarm-btn");
+    if (stopBtn) stopBtn.style.display = "flex";
+};
+
+window.openExactAlarmSettings = () => {
+    if (window.AndroidAlarm && typeof window.AndroidAlarm.openExactAlarmSettings === "function") {
+        window.AndroidAlarm.openExactAlarmSettings();
+        return;
+    }
+    alert("Menu Exact Alarm hanya tersedia di aplikasi Android.");
+};
+
+window.openBatteryOptimizationSettings = () => {
+    if (window.AndroidAlarm && typeof window.AndroidAlarm.openBatteryOptimizationSettings === "function") {
+        window.AndroidAlarm.openBatteryOptimizationSettings();
+        return;
+    }
+    alert("Menu optimasi baterai hanya tersedia di aplikasi Android.");
 };
 
 window.checkReminders = () => {
@@ -468,9 +621,10 @@ window.saveModalReminder = () => {
         return;
     }
 
+    const editTask = currentEditTaskId ? allTasks.find((task) => task.id === currentEditTaskId) : null;
     const baseDateKey = currentEditTaskId && currentReminderTarget === "edit"
-        ? allTasks.find((task) => task.id === currentEditTaskId)?.date || getLocalDateKey(new Date())
-        : document.getElementById("task-date").value || getLocalDateKey(new Date());
+        ? (editTask && editTask.date ? editTask.date : getLocalDateKey(new Date()))
+        : (document.getElementById("task-date").value || getLocalDateKey(new Date()));
 
     const reminder = buildReminder(type, time, baseDateKey);
 

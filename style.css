@@ -46,14 +46,9 @@
             overflow-y: auto;
         }
 
-        /* --- Header --- */
+        /* --- Legacy Header Styles --- */
         header {
-            padding: 18px 22px 12px;
-            background: transparent;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
+            display: none;
         }
 
         .brand {
@@ -110,7 +105,7 @@
             min-height: 0;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            padding: 6px 18px 112px;
+            padding: 18px 18px 112px;
             position: relative;
         }
         .view-section { display: none; animation: fadeIn 0.35s ease; max-width: 1100px; width: 100%; margin: 0 auto; }
@@ -232,6 +227,30 @@
             align-items: center;
         }
 
+        .task-feed-shell {
+            padding: 20px;
+        }
+
+        .task-list-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .task-list-header h3 {
+            margin-top: 8px;
+            font-size: 1.4rem;
+        }
+
+        .task-list-copy {
+            color: var(--text-sub);
+            margin-top: 8px;
+            line-height: 1.6;
+            max-width: 40rem;
+        }
+
         .search-input {
             min-width: 180px;
             border-radius: 16px;
@@ -239,6 +258,11 @@
             background: var(--surface);
             color: var(--text-main);
             padding: 12px 14px;
+        }
+
+        .search-input-full {
+            width: 100%;
+            margin-bottom: 14px;
         }
 
         .glass-btn {
@@ -883,6 +907,104 @@
             margin-top: 6px;
         }
 
+        .settings-stack {
+            display: grid;
+            gap: 14px;
+            margin: 18px 0 12px;
+        }
+
+        .settings-card {
+            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            border-radius: 22px;
+            padding: 18px;
+        }
+
+        .settings-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .settings-card-head h4 {
+            margin-top: 6px;
+            font-size: 1.05rem;
+        }
+
+        .settings-card-head i {
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        .settings-card label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .settings-inline {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .compact-actions {
+            margin-bottom: 0;
+        }
+
+        .compact-btn {
+            flex: 0 1 auto;
+            min-width: 0;
+            padding: 12px 14px;
+            border-radius: 14px;
+        }
+
+        .support-note {
+            color: var(--text-sub);
+            line-height: 1.6;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .account-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .account-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-start;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .danger-btn {
+            border-color: rgba(239, 68, 68, 0.22);
+            color: var(--danger);
+        }
+
+        .danger-btn:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
         .profile-menu-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1198,25 +1320,10 @@
             cursor: pointer;
             box-shadow: 0 12px 20px rgba(239, 68, 68, 0.25);
         }
-        .alarm-header-btn:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
 
         @media (max-width: 768px) {
-            header {
-                padding: 16px 14px 8px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
-                flex-wrap: wrap;
-            }
             main {
-                padding: 4px 14px 108px;
+                padding: 14px 14px 108px;
             }
             .hero-panel,
             .task-overview-grid,
@@ -1238,6 +1345,11 @@
             .search-input {
                 flex: 1;
                 min-width: 0;
+            }
+            .task-list-header,
+            .settings-inline {
+                flex-direction: column;
+                align-items: stretch;
             }
             .calendar-grid { gap: 6px; }
             .calendar-weekdays { gap: 6px; }

@@ -25,61 +25,19 @@
         <i class="fas fa-volume-mute"></i> Stop Alarm
     </button>
 
-    <header>
-        <div class="brand">
-            <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
-            <div>
-                <span class="eyebrow">Super Planner</span>
-                <strong>Ruang kerja harian Anda</strong>
-            </div>
-        </div>
-        <div class="header-actions">
-            <span class="user-info" id="user-display">
-                <i class="fas fa-user-circle"></i> <span id="current-user">Guest</span>
-            </span>
-            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-            <button id="header-stop-alarm-btn" class="theme-toggle alarm-header-btn" onclick="stopActiveAlarm()" title="Stop Alarm" disabled><i class="fas fa-volume-xmark"></i></button>
-            <button class="logout-btn" onclick="logout()" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
-    </header>
-
     <main>
         <div id="view-tasks" class="view-section active">
-            <section class="hero-panel">
-                <div>
-                    <p class="eyebrow">Daily Flow</p>
-                    <h2>Task</h2>
-                    <p class="hero-copy">Gunakan tombol <strong>+</strong> di footer untuk menambah tugas, lalu pantau jadwal aktif, rutinitas, dan kalender tanpa layar terasa sesak.</p>
-                </div>
-                <button class="hero-cta" onclick="openTaskModal()"><i class="fas fa-plus"></i> Tambah Tugas</button>
-            </section>
-
-            <section class="task-overview-grid">
-                <div class="overview-card">
-                    <span>Aktif Hari Ini</span>
-                    <strong id="task-overview-today">0</strong>
-                </div>
-                <div class="overview-card">
-                    <span>Rutinitas Aktif</span>
-                    <strong id="task-overview-routine">0</strong>
-                </div>
-                <div class="overview-card">
-                    <span>Selesai Minggu Ini</span>
-                    <strong id="task-overview-week">0</strong>
-                </div>
-            </section>
-
-            <section class="section-shell">
-                <div class="section-heading">
+            <section class="section-shell task-feed-shell">
+                <div class="task-list-header">
                     <div>
-                        <p class="eyebrow">Task List</p>
+                        <p class="eyebrow">Tugas</p>
                         <h3>Daftar Tugas</h3>
+                        <p class="task-list-copy">Tasks <strong>+</strong> </p>
                     </div>
-                    <div class="toolbar-row">
-                        <input type="text" id="search-input" placeholder="Cari..." class="search-input" onkeyup="renderTasks()">
-                        <button class="icon-btn glass-btn" onclick="startPomodoro()"><i class="fas fa-stopwatch"></i></button>
-                    </div>
+                    <button class="icon-btn glass-btn" onclick="startPomodoro()" title="Focus Mode"><i class="fas fa-stopwatch"></i></button>
                 </div>
+
+                <input type="text" id="search-input" placeholder="Cari tugas..." class="search-input search-input-full" onkeyup="renderTasks()">
 
                 <div class="filter-buttons">
                     <button class="filter-btn active" onclick="filterTasks('all', this)">Semua</button>
@@ -317,6 +275,72 @@
                         <i class="fas fa-database"></i> Backup
                     </button>
                 </div>
+                <div class="settings-stack">
+                    <div class="settings-card">
+                        <div class="settings-card-head">
+                            <div>
+                                <p class="eyebrow">Alarm</p>
+                                <h4>Pengaturan Suara Alarm</h4>
+                            </div>
+                            <i class="fas fa-volume-high"></i>
+                        </div>
+                        <label for="alarm-sound-select">Pilih suara alarm lokal</label>
+                        <div class="settings-inline">
+                            <select id="alarm-sound-select" onchange="saveAlarmSoundPreference(this.value)">
+                                <option value="alarm_tone">Alarm Standar</option>
+                                <option value="alarm_soft">Alarm Lembut</option>
+                                <option value="alarm_classic">Alarm Klasik</option>
+                            </select>
+                            <button class="backup-btn compact-btn" onclick="previewAlarmSound()">
+                                <i class="fas fa-play"></i> Preview
+                            </button>
+                        </div>
+                        <p class="support-note">Untuk Android, pilihan ini juga dikirim ke alarm native agar lockscreen memakai nada yang sama.</p>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-head">
+                            <div>
+                                <p class="eyebrow">Izin Alarm</p>
+                                <h4>Dukungan Lockscreen</h4>
+                            </div>
+                            <i class="fas fa-mobile-screen-button"></i>
+                        </div>
+                        <p class="support-note">Jika alarm belum muncul saat layar terkunci, aktifkan izin notifikasi, exact alarm, dan nonaktifkan optimasi baterai untuk aplikasi ini.</p>
+                        <div class="backup-section compact-actions">
+                            <button class="backup-btn compact-btn" onclick="requestNotificationPermission()">
+                                <i class="fas fa-bell"></i> Izin Notifikasi
+                            </button>
+                            <button class="backup-btn compact-btn" onclick="openExactAlarmSettings()">
+                                <i class="fas fa-clock"></i> Exact Alarm
+                            </button>
+                            <button class="backup-btn compact-btn" onclick="openBatteryOptimizationSettings()">
+                                <i class="fas fa-battery-half"></i> Baterai
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-head">
+                            <div>
+                                <p class="eyebrow">Akun</p>
+                                <h4>Tampilan & Sesi</h4>
+                            </div>
+                            <i class="fas fa-user-gear"></i>
+                        </div>
+                        <div class="account-panel">
+                            <div class="account-chip"><i class="fas fa-user-circle"></i> <span id="current-user">Guest</span></div>
+                            <div class="settings-inline">
+                                <button class="backup-btn compact-btn" onclick="toggleTheme()">
+                                    <i class="fas fa-moon"></i> Tema
+                                </button>
+                                <button class="backup-btn compact-btn danger-btn" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <button class="btn-add" style="background: #25D366;" onclick="shareProgress()"><i class="fab fa-whatsapp"></i> Share Progress WA</button>
             </section>
         </div>
@@ -548,8 +572,11 @@
         </div>
     </div>
 
-    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" loop></audio>
+    <audio id="notif-sound" src="alarm_tone.wav" preload="auto" loop></audio>
 
-    <script type="module" src="script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

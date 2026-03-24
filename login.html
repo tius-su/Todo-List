@@ -261,12 +261,9 @@
         </p>
     </div>
 
-    <!-- Firebase Auth Scripts -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
-        // Firebase configuration
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAn7gIui9U5Yt6dDjJAX-gIUxQCkzkwz-o",
             authDomain: "hutang-notes.firebaseapp.com",
@@ -277,19 +274,19 @@
             appId: "1:705787619261:web:44ba4dfad2535d202e94d4"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(app);
+        const provider = new firebase.auth.GoogleAuthProvider();
 
-        // Check if user is already logged in
-        onAuthStateChanged(auth, (user) => {
+        auth.onAuthStateChanged((user) => {
             if (!user) return;
 
             const displayName = user.displayName || user.email || user.uid;
             localStorage.setItem('currentUser', displayName);
             localStorage.setItem('currentUserUid', user.uid);
             localStorage.setItem('currentUserEmail', user.email || '');
-            localStorage.setItem('currentUserType', user.providerData?.[0]?.providerId || 'firebase');
+            const providerId = user.providerData && user.providerData[0] ? user.providerData[0].providerId : 'firebase';
+            localStorage.setItem('currentUserType', providerId || 'firebase');
             window.location.href = 'index.html';
         });
 
@@ -310,7 +307,7 @@
             }
 
             try {
-                const result = await signInWithEmailAndPassword(auth, email, password);
+                const result = await auth.signInWithEmailAndPassword(email, password);
                 const user = result.user;
                 localStorage.setItem('currentUser', user.displayName || user.email || user.uid);
                 localStorage.setItem('currentUserUid', user.uid);
@@ -340,7 +337,7 @@
         };
 
         document.getElementById('google-login-btn').addEventListener('click', () => {
-            signInWithPopup(auth, provider)
+            auth.signInWithPopup(provider)
                 .then((result) => {
                     const user = result.user;
                     const displayName = user.displayName || user.email || user.uid;
